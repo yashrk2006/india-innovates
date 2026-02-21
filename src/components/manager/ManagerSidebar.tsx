@@ -2,8 +2,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-function Icon({ name, size = 16 }: { name: string; size?: number }) {
-    return <span className="material-symbols-outlined" style={{ fontSize: size }}>{name}</span>;
+function Icon({ name, size = 16, style }: { name: string; size?: number; style?: React.CSSProperties }) {
+    return <span className="material-symbols-outlined" style={{ fontSize: size, ...style }}>{name}</span>;
 }
 
 const NAV = [

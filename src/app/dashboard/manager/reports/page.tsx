@@ -5,8 +5,8 @@ import ManagerPageLayout, { MgrCard, MgrSection, MgrKPI, MgrBar } from "@/compon
 import { useApi } from "@/lib/hooks";
 import { useToast } from "@/components/ui/Toast";
 
-function Icon({ name, size = 16, className = "" }: { name: string; size?: number; className?: string }) {
-    return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size }}>{name}</span>;
+function Icon({ name, size = 16, className = "", style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) {
+    return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size, ...style }}>{name}</span>;
 }
 
 const reports = [

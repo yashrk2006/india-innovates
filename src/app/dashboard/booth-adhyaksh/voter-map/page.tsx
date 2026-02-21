@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-function Icon({ name, className = "", size }: { name: string; className?: string; size?: number }) {
-    return <span className={`material-symbols-outlined ${className}`} style={size ? { fontSize: size } : undefined}>{name}</span>;
+function Icon({ name, className = "", size, style }: { name: string; className?: string; size?: number; style?: React.CSSProperties }) {
+    return <span className={`material-symbols-outlined ${className}`} style={{ ...(size ? { fontSize: size } : {}), ...style }}>{name}</span>;
 }
 function NavItem({ icon, label, active, href }: { icon: string; label: string; active?: boolean; href?: string }) {
     const router = useRouter();

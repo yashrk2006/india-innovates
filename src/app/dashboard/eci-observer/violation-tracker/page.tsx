@@ -3,8 +3,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ECIPageLayout, { ECICard, ECISectionHeader, ECIKPI } from "@/components/eci/ECIPageLayout";
 
-function Icon({ name, size = 16, className = "" }: { name: string; size?: number; className?: string }) {
-    return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size }}>{name}</span>;
+function Icon({ name, size = 16, className = "", style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) {
+    return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size, ...style }}>{name}</span>;
 }
 
 /* ══════════════════════════════ DATA ══════════════════════════════ */

@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import ManagerPageLayout, { MgrCard, MgrSection, MgrKPI, MgrBar } from "@/components/manager/ManagerPageLayout";
 import { useApi } from "@/lib/hooks";
 
-function Icon({ name, size = 16, className = "" }: { name: string; size?: number; className?: string }) {
-    return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size }}>{name}</span>;
+function Icon({ name, size = 16, className = "", style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) {
+    return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size, ...style }}>{name}</span>;
 }
 
 const wards = [
