@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ── CONSTANTS & THEME TOKENS ─────────────────────────────────────────── */
@@ -208,8 +209,8 @@ const PageOverview = () => {
    ══════════════════════════════════════════════════════════════ */
 const NAV = [
     { section: "OVERVIEW", items: [{ id: "dashboard", icon: "dashboard", label: "System Dashboard" }, { id: "activity", icon: "activity", label: "Live Activity" }] },
-    { section: "MANAGEMENT", items: [{ id: "users", icon: "users", label: "User Management" }, { id: "campaigns", icon: "send", label: "Campaign Monitor" }] },
-    { section: "MONITORING", items: [{ id: "anomalies", icon: "alert", label: "Anomaly Detection" }, { id: "audit", icon: "file", label: "Audit Log Archive" }] },
+    { section: "MANAGEMENT", items: [{ id: "users", icon: "users", label: "User Management", href: "/dashboard/super-admin/user-management" }, { id: "campaigns", icon: "send", label: "Campaign Monitor" }] },
+    { section: "MONITORING", items: [{ id: "anomalies", icon: "alert", label: "Anomaly Detection", href: "/dashboard/super-admin/anomaly-detection" }, { id: "audit", icon: "file", label: "Audit Log Archive" }] },
     { section: "SECURITY", items: [{ id: "freeze", icon: "power", label: "Platform Freeze" }, { id: "access", icon: "lock", label: "Access Control" }] },
 ];
 
@@ -224,6 +225,7 @@ const PAGE_TITLES: Record<string, string> = {
    MAIN APP SHELL
    ══════════════════════════════════════════════════════════════ */
 export default function SuperAdminPage() {
+    const router = useRouter();
     const [page, setPage] = useState("dashboard");
     const [collapsed, setCollapsed] = useState(false);
     const [clock, setClock] = useState("");
@@ -265,7 +267,7 @@ export default function SuperAdminPage() {
                             {items.map(item => (
                                 <div
                                     key={item.id}
-                                    onClick={() => setPage(item.id)}
+                                    onClick={() => { if ((item as any).href) { router.push((item as any).href); } else { setPage(item.id); } }}
                                     className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all duration-200 group ${page === item.id ? "bg-accent-gold/10 text-accent-gold" : "text-white/50 hover:bg-white/5 hover:text-white"}`}
                                     title={collapsed ? item.label : ""}
                                 >

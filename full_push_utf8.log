@@ -1,0 +1,42 @@
+﻿node.exe : Initialising login role...
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Initialising  
+   login role...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Connecting to remote database...
+Do you want to push these migrations to the remote 
+database?
+ ΓÇó 20260221000000_seed.sql
+
+ [Y/n] Applying migration 20260221000000_seed.sql...
+ERROR: insert or update on table "citizen_notifications" 
+violates foreign key constraint 
+"citizen_notifications_voter_id_fkey" (SQLSTATE 23503)
+Key (voter_id)=(1) is not present in table "voters".       
+                                                           
+                         
+At statement: 522                                          
+                                                           
+                         
+-- STEP 9: CITIZEN NOTIFICATIONS                           
+                                                           
+                         
+INSERT INTO citizen_notifications (voter_id, title, body, 
+icon, is_read, created_at)                                 
+                          
+SELECT 1, 'PM-KISAN: Γé╣2,000 Credited', 'Your 16th 
+installment has been credited.', 'payments', false, now() 
+- interval '2 hours'               
+UNION ALL                                                  
+                                                           
+                         
+SELECT 1, 'Road Repair Begins', 'Shivpur Main Road 
+resurfacing starts today.', 'construction', false, now() - 
+interval '1 day'                 
+Try rerunning the command with --debug to troubleshoot the 
+error.

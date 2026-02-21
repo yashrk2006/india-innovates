@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "BoothIQ - Political Intelligence Platform",
@@ -44,7 +45,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background-dark text-cream font-display min-h-screen flex flex-col antialiased relative" suppressHydrationWarning>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

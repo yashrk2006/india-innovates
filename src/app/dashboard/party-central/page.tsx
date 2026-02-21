@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 /* ──────────────────────────────────────────────────────────
    Icon Helper (Material Symbols)
@@ -29,6 +30,19 @@ function Icon({
    ────────────────────────────────────────────────────────── */
 export default function PartyCentralPage() {
     const [time, setTime] = useState("");
+    const [kpis, setKpis] = useState({
+        constituencies: 0,
+        voters: 0,
+        activeCampaigns: 0,
+        avgSentiment: 0,
+    });
+    const [loadingKpis, setLoadingKpis] = useState(true);
+    const [statePerformance, setStatePerformance] = useState<{ state: string; val: number; color: string; shadow: string }[]>([]);
+    const [loadingStates, setLoadingStates] = useState(true);
+    const [liveFeeds, setLiveFeeds] = useState<any[]>([]);
+    const [loadingFeeds, setLoadingFeeds] = useState(true);
+    const [signOffs, setSignOffs] = useState<any[]>([]);
+    const [loadingSignOffs, setLoadingSignOffs] = useState(true);
 
     useEffect(() => {
         const updateClock = () => {
@@ -39,6 +53,168 @@ export default function PartyCentralPage() {
         const interval = setInterval(updateClock, 1000);
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        async function fetchKpis() {
+            try {
+                // Fetch Constituencies count
+                const { count: constituenciesCount, error: cError } = await supabase
+                    .from("constituencies")
+                    .select("*", { count: "exact", head: true });
+
+                // Fetch Voters count
+                const { count: votersCount, error: vError } = await supabase
+                    .from("voters")
+                    .select("*", { count: "exact", head: true });
+
+                // Fetch Active Campaigns count (status = 'active')
+                const { count: activeCampaignsCount, error: aError } = await supabase
+                    .from("campaigns")
+                    .select("*", { count: "exact", head: true })
+                    .eq("status", "active");
+
+                // Fetch Avg Sentiment
+                const { data: sentiments, error: sError } = await supabase
+                    .from("sentiment_records")
+                    .select("score");
+
+                let avgSentiment = 0;
+                if (sentiments && sentiments.length > 0) {
+                    const totalScore = sentiments.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0);
+                    avgSentiment = Math.round(totalScore / sentiments.length);
+                }
+
+                if (cError) console.error("Error fetching constituencies:", cError);
+                if (vError) console.error("Error fetching voters:", vError);
+                if (aError) console.error("Error fetching active campaigns:", aError);
+                if (sError) console.error("Error fetching sentiments:", sError);
+
+                setKpis({
+                    constituencies: constituenciesCount || 0,
+                    voters: votersCount || 0,
+                    activeCampaigns: activeCampaignsCount || 0,
+                    avgSentiment: avgSentiment || 0,
+                });
+            } catch (err) {
+                console.error("Failed to fetch KPIs:", err);
+            } finally {
+                setLoadingKpis(false);
+            }
+        }
+
+        async function fetchStatePerformance() {
+            try {
+                const { data: constituenciesData, error: cError } = await supabase
+                    .from("constituencies")
+                    .select("id, name, state");
+
+                const { data: grievancesData, error: gError } = await supabase
+                    .from("grievances")
+                    .select("id, status, constituency_id");
+
+                if (cError || gError) {
+                    console.error("Error fetching data for state performance:", cError || gError);
+                    return;
+                }
+
+                if (constituenciesData && grievancesData) {
+                    // Aggregate by state
+                    const stateStats: Record<string, { total: number; resolved: number }> = {};
+
+                    // Ensure all states from constituencies are represented
+                    constituenciesData.forEach((c: any) => {
+                        if (!stateStats[c.state]) {
+                            stateStats[c.state] = { total: 0, resolved: 0 };
+                        }
+                    });
+
+                    // Add grievance data
+                    grievancesData.forEach((g: any) => {
+                        const constituency = constituenciesData.find((c: any) => c.id === g.constituency_id);
+                        if (constituency) {
+                            const state = constituency.state;
+                            if (stateStats[state]) {
+                                stateStats[state].total++;
+                                if (g.status === "resolved") {
+                                    stateStats[state].resolved++;
+                                }
+                            }
+                        }
+                    });
+
+                    // Convert to performance score array
+                    const performanceArray = Object.entries(stateStats).map(([state, stats]) => {
+                        let score = 90;
+                        if (stats.total > 0) {
+                            score = Math.round((stats.resolved / stats.total) * 100);
+                        }
+
+                        return {
+                            state,
+                            val: score,
+                            color: score >= 70 ? "bg-green-700" : score >= 40 ? "bg-amber-600" : "bg-red-800",
+                            shadow: score >= 70 ? "shadow-green-700/50" : score >= 40 ? "shadow-amber-600/50" : "shadow-red-800/50",
+                        };
+                    });
+
+                    // Sort descending by score
+                    performanceArray.sort((a, b) => b.val - a.val);
+                    setStatePerformance(performanceArray);
+                }
+            } catch (err) {
+                console.error("Failed to calculate state performance:", err);
+            } finally {
+                setLoadingStates(false);
+            }
+        }
+
+        async function fetchLiveFeeds() {
+            try {
+                const { data, error } = await supabase
+                    .from("campaigns")
+                    .select("id, name, type, status, created_at, constituencies(name, state)")
+                    .order("created_at", { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+                if (data) setLiveFeeds(data);
+            } catch (err) {
+                console.error("Failed to fetch live feeds:", err);
+            } finally {
+                setLoadingFeeds(false);
+            }
+        }
+
+        async function fetchSignOffs() {
+            try {
+                const { data, error } = await supabase
+                    .from("campaigns")
+                    .select("id, name, type, created_at")
+                    .eq("status", "planned")
+                    .order("created_at", { ascending: false })
+                    .limit(3);
+
+                if (error) throw error;
+                if (data) setSignOffs(data);
+            } catch (err) {
+                console.error("Failed to fetch sign-offs:", err);
+            } finally {
+                setLoadingSignOffs(false);
+            }
+        }
+
+        fetchKpis();
+        fetchStatePerformance();
+        fetchLiveFeeds();
+        fetchSignOffs();
+    }, []);
+
+    // Format numbers easily (e.g., 14.2L or just raw numbers if small)
+    const formatNumber = (num: number) => {
+        if (num >= 100000) return (num / 100000).toFixed(1) + "L";
+        if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+        return num.toString();
+    };
 
     return (
         <div className="flex h-screen overflow-hidden bg-background-dark text-cream font-sans selection:bg-primary selection:text-background-dark">
@@ -240,7 +416,7 @@ export default function PartyCentralPage() {
                                 <Icon name="location_on" className="text-primary opacity-50" />
                             </div>
                             <div className="font-serif text-4xl font-bold text-cream mb-4">
-                                543
+                                {loadingKpis ? "..." : formatNumber(kpis.constituencies)}
                             </div>
                             <div className="h-8 w-full">
                                 <svg
@@ -264,12 +440,12 @@ export default function PartyCentralPage() {
                         <div className="bg-[#111520] border border-primary/20 rounded p-5 relative overflow-hidden group hover:bg-[#161b28] transition-colors">
                             <div className="flex justify-between items-start mb-2">
                                 <div className="font-mono text-[10px] uppercase tracking-widest text-white/60">
-                                    Voters Reached
+                                    Voters Database
                                 </div>
                                 <Icon name="groups" className="text-primary opacity-50" />
                             </div>
                             <div className="font-serif text-4xl font-bold text-cream mb-4">
-                                14.2L
+                                {loadingKpis ? "..." : formatNumber(kpis.voters)}
                             </div>
                             <div className="h-8 w-full">
                                 <svg
@@ -298,7 +474,7 @@ export default function PartyCentralPage() {
                                 <Icon name="campaign" className="text-primary opacity-50" />
                             </div>
                             <div className="font-serif text-4xl font-bold text-cream mb-4">
-                                128
+                                {loadingKpis ? "..." : formatNumber(kpis.activeCampaigns)}
                             </div>
                             <div className="h-8 w-full">
                                 <svg
@@ -325,14 +501,14 @@ export default function PartyCentralPage() {
                                     Natl. Sentiment
                                 </div>
                                 <div className="font-serif text-4xl font-bold text-cream">
-                                    74
+                                    {loadingKpis ? "..." : kpis.avgSentiment}
                                     <span className="text-lg text-white/60 font-sans font-light">
                                         /100
                                     </span>
                                 </div>
                                 <div className="text-[10px] text-green-600 mt-1 flex items-center gap-1 font-mono">
                                     <Icon name="trending_up" size={12} />
-                                    +4.2% THIS WEEK
+                                    Live Average
                                 </div>
                             </div>
                             <div className="relative w-20 h-20 flex items-center justify-center">
@@ -349,11 +525,11 @@ export default function PartyCentralPage() {
                                         strokeWidth="3"
                                     ></path>
                                     <path
-                                        className="text-primary drop-shadow-[0_0_8px_rgba(201,168,76,0.6)]"
+                                        className="text-primary drop-shadow-[0_0_8px_rgba(201,168,76,0.6)] transition-all duration-1000"
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                         fill="none"
                                         stroke="currentColor"
-                                        strokeDasharray="74, 100"
+                                        strokeDasharray={`${loadingKpis ? 0 : kpis.avgSentiment}, 100`}
                                         strokeWidth="3"
                                     ></path>
                                 </svg>
@@ -377,32 +553,30 @@ export default function PartyCentralPage() {
                                 </button>
                             </div>
                             <div className="overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                                {[
-                                    { state: "Uttar Pradesh", val: 88, color: "bg-green-700", shadow: "shadow-green-700/50" },
-                                    { state: "Gujarat", val: 92, color: "bg-green-700", shadow: "shadow-green-700/50" },
-                                    { state: "Maharashtra", val: 62, color: "bg-amber-600", shadow: "shadow-amber-600/50" },
-                                    { state: "West Bengal", val: 35, color: "bg-red-800", shadow: "shadow-red-800/50" },
-                                    { state: "Karnataka", val: 58, color: "bg-amber-600", shadow: "shadow-amber-600/50" },
-                                    { state: "Rajasthan", val: 71, color: "bg-green-700", shadow: "shadow-green-700/50" },
-                                    { state: "Bihar", val: 48, color: "bg-amber-600", shadow: "shadow-amber-600/50" },
-                                ].map((item) => (
-                                    <div key={item.state}>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-cream font-serif font-bold tracking-wide">
-                                                {item.state}
-                                            </span>
-                                            <span className={`font-mono ${item.val >= 70 ? "text-green-600" : item.val >= 40 ? "text-amber-600" : "text-red-700"}`}>
-                                                {item.val}%
-                                            </span>
+                                {loadingStates ? (
+                                    <div className="text-white/40 text-xs flex justify-center py-4">Loading states...</div>
+                                ) : statePerformance.length > 0 ? (
+                                    statePerformance.map((item) => (
+                                        <div key={item.state}>
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-cream font-serif font-bold tracking-wide">
+                                                    {item.state}
+                                                </span>
+                                                <span className={`font-mono ${item.val >= 70 ? "text-green-600" : item.val >= 40 ? "text-amber-600" : "text-red-700"}`}>
+                                                    {item.val}%
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-background-dark rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]`}
+                                                    style={{ width: `${item.val}%` }}
+                                                ></div>
+                                            </div>
                                         </div>
-                                        <div className="h-1.5 w-full bg-background-dark rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]`}
-                                                style={{ width: `${item.val}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <div className="text-white/40 text-[10px] text-center italic mt-10">No state data available</div>
+                                )}
                             </div>
                         </div>
 
@@ -435,89 +609,42 @@ export default function PartyCentralPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="text-xs divide-y divide-white/10">
-                                        <tr className="hover:bg-[#161b28] transition-colors cursor-pointer group">
-                                            <td className="p-3 font-mono text-white/60">14:30</td>
-                                            <td className="p-3">
-                                                <div className="font-medium text-cream">
-                                                    Youth Outreach #402
-                                                </div>
-                                                <div className="text-white/60 text-[10px]">
-                                                    SMS Blast (50k)
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-white/60">Lucknow, UP</td>
-                                            <td className="p-3 text-right">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-green-900/20 text-green-600 border border-green-600/30">
-                                                    LIVE
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <tr className="hover:bg-[#161b28] transition-colors cursor-pointer group">
-                                            <td className="p-3 font-mono text-white/60">14:28</td>
-                                            <td className="p-3">
-                                                <div className="font-medium text-cream">
-                                                    Farmer Subsidy Awareness
-                                                </div>
-                                                <div className="text-white/60 text-[10px]">
-                                                    WhatsApp Bot
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-white/60">Vidarbha, MH</td>
-                                            <td className="p-3 text-right">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-green-900/20 text-green-600 border border-green-600/30">
-                                                    LIVE
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <tr className="hover:bg-[#161b28] transition-colors cursor-pointer group bg-red-900/5">
-                                            <td className="p-3 font-mono text-white/60">14:21</td>
-                                            <td className="p-3">
-                                                <div className="font-medium text-cream">
-                                                    Urban Development Ad
-                                                </div>
-                                                <div className="text-white/60 text-[10px]">
-                                                    Facebook Meta Ads
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-white/60">Bangalore, KA</td>
-                                            <td className="p-3 text-right">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-red-900/20 text-red-600 border border-red-600/30">
-                                                    FLAGGED
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <tr className="hover:bg-[#161b28] transition-colors cursor-pointer group">
-                                            <td className="p-3 font-mono text-white/60">14:15</td>
-                                            <td className="p-3">
-                                                <div className="font-medium text-cream">
-                                                    Women Safety Survey
-                                                </div>
-                                                <div className="text-white/60 text-[10px]">IVR Call</div>
-                                            </td>
-                                            <td className="p-3 text-white/60">Jaipur, RJ</td>
-                                            <td className="p-3 text-right">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-900/20 text-amber-600 border border-amber-600/30">
-                                                    PENDING
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <tr className="hover:bg-[#161b28] transition-colors cursor-pointer group">
-                                            <td className="p-3 font-mono text-white/60">14:10</td>
-                                            <td className="p-3">
-                                                <div className="font-medium text-cream">
-                                                    Rally Invitation
-                                                </div>
-                                                <div className="text-white/60 text-[10px]">
-                                                    Email Campaign
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-white/60">Patna, BR</td>
-                                            <td className="p-3 text-right">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-green-900/20 text-green-600 border border-green-600/30">
-                                                    LIVE
-                                                </span>
-                                            </td>
-                                        </tr>
+                                        {loadingFeeds ? (
+                                            <tr><td colSpan={4} className="p-4 text-center text-white/40">Loading feed...</td></tr>
+                                        ) : liveFeeds.length > 0 ? (
+                                            liveFeeds.map((feed) => {
+                                                const createDate = new Date(feed.created_at);
+                                                const timeStr = createDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+                                                // @ts-ignore
+                                                const regionStr = feed.constituencies ? `${feed.constituencies.name}, ${feed.constituencies.state}` : "National";
+
+                                                let statusColor = "bg-green-900/20 text-green-600 border-green-600/30";
+                                                if (feed.status === "planned") statusColor = "bg-amber-900/20 text-amber-600 border-amber-600/30";
+                                                if (feed.status === "completed") statusColor = "bg-primary/20 text-primary border-primary/30";
+
+                                                return (
+                                                    <tr key={feed.id} className="hover:bg-[#161b28] transition-colors cursor-pointer group">
+                                                        <td className="p-3 font-mono text-white/60">{timeStr}</td>
+                                                        <td className="p-3">
+                                                            <div className="font-medium text-cream truncate max-w-[150px]">
+                                                                {feed.name}
+                                                            </div>
+                                                            <div className="text-white/60 text-[10px] uppercase">
+                                                                {feed.type?.replace("_", " ")}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-3 text-white/60 truncate max-w-[120px]">{regionStr}</td>
+                                                        <td className="p-3 text-right">
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium border uppercase ${statusColor}`}>
+                                                                {feed.status === "active" ? "LIVE" : feed.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        ) : (
+                                            <tr><td colSpan={4} className="p-4 text-center text-white/40">No campaigns found</td></tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -532,39 +659,51 @@ export default function PartyCentralPage() {
                                         Sign-off Queue
                                     </h3>
                                     <span className="bg-primary text-background-dark text-[10px] font-bold px-1.5 rounded">
-                                        3
+                                        {loadingSignOffs ? "..." : signOffs.length}
                                     </span>
                                 </div>
                                 <div className="p-4 overflow-y-auto space-y-3 custom-scrollbar">
-                                    {[
-                                        { title: "Manifesto Video V2", time: "20m ago", desc: "Requires final sign-off from IT Cell head before national broadcast." },
-                                        { title: "Budget Response Graphic", time: "45m ago", desc: "Social media creatives for Instagram and Twitter." },
-                                    ].map((item) => (
-                                        <div
-                                            key={item.title}
-                                            className="bg-background-dark border border-white/10 p-3 rounded hover:border-primary transition-colors group"
-                                        >
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="text-saffron font-serif font-bold text-sm">
-                                                    {item.title}
-                                                </span>
-                                                <span className="text-[10px] text-white/60 font-mono">
-                                                    {item.time}
-                                                </span>
-                                            </div>
-                                            <div className="text-xs text-white/60 mb-3 line-clamp-2">
-                                                {item.desc}
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button className="flex-1 bg-primary/10 text-primary border border-primary/20 text-[10px] uppercase font-mono py-1.5 rounded hover:bg-primary hover:text-background-dark transition-colors">
-                                                    Approve
-                                                </button>
-                                                <button className="px-3 border border-white/10 text-white/60 rounded hover:text-white hover:border-white/60">
-                                                    <Icon name="visibility" size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                    {loadingSignOffs ? (
+                                        <div className="text-white/40 text-xs text-center py-4">Loading queue...</div>
+                                    ) : signOffs.length > 0 ? (
+                                        signOffs.map((item) => {
+                                            // Make relative time approximation
+                                            const sec = Math.floor((new Date().getTime() - new Date(item.created_at).getTime()) / 1000);
+                                            let timeStr = "just now";
+                                            if (sec > 60) timeStr = `${Math.floor(sec / 60)}m ago`;
+                                            if (sec > 3600) timeStr = `${Math.floor(sec / 3600)}h ago`;
+                                            if (sec > 86400) timeStr = `${Math.floor(sec / 86400)}d ago`;
+
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className="bg-background-dark border border-white/10 p-3 rounded hover:border-primary transition-colors group"
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="text-saffron font-serif font-bold text-sm truncate pr-2">
+                                                            {item.name}
+                                                        </span>
+                                                        <span className="text-[10px] text-white/60 font-mono whitespace-nowrap">
+                                                            {timeStr}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">
+                                                        {item.type?.replace("_", " ")}
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button className="flex-1 bg-primary/10 text-primary border border-primary/20 text-[10px] uppercase font-mono py-1.5 rounded hover:bg-primary hover:text-background-dark transition-colors">
+                                                            Approve
+                                                        </button>
+                                                        <button className="px-3 border border-white/10 text-white/60 rounded hover:text-white hover:border-white/60">
+                                                            <Icon name="visibility" size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-white/40 text-xs text-center italic py-4">All caught up</div>
+                                    )}
                                 </div>
                             </div>
 

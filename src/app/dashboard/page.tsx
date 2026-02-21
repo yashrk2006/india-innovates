@@ -16,10 +16,22 @@ export default function DashboardPage() {
 
         const role = getCookie("user_role");
 
-        if (role === "admin" || role === "super-admin") {
-            router.push("/dashboard/super-admin");
-        } else if (role === "mp" || role === "party") {
-            router.push("/dashboard/party-central");
+        const roleRoutes: Record<string, string> = {
+            "admin": "/dashboard/super-admin",
+            "super-admin": "/dashboard/super-admin",
+            "mp": "/dashboard/party-central",
+            "party": "/dashboard/party-central",
+            "party-command": "/dashboard/party-central",
+            "citizen": "/citizen",
+            "manager": "/dashboard/manager",
+            "data-analyst": "/dashboard/data-analyst",
+            "eci-observer": "/dashboard/eci-observer",
+            "booth-adhyaksh": "/dashboard/booth-adhyaksh",
+            "panna-pramukh": "/dashboard/panna-pramukh",
+        };
+
+        if (role && roleRoutes[role]) {
+            router.push(roleRoutes[role]);
         } else {
             // Default to Party Central if no specific role or unknown
             router.push("/dashboard/party-central");

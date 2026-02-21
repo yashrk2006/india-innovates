@@ -1,0 +1,76 @@
+﻿node.exe : Initialising login role...
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Initialising  
+   login role...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Connecting to remote database...
+Do you want to push these migrations to the remote 
+database?
+ ΓÇó 20260221000000_seed.sql
+
+ [Y/n] Applying migration 20260221000000_seed.sql...
+ERROR: insert or update on table "profiles" violates 
+foreign key constraint "profiles_id_fkey" (SQLSTATE 23503) 
+              
+Key (id)=(00000000-0000-0000-0000-00000000000a) is not 
+present in table "users".                                  
+            
+At statement: 524                                          
+                                                           
+        
+-- ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ                                      
+                    
+-- STEP 11: DEMO PROFILES (Admins, Workers, Candidates)    
+                                                           
+        
+-- Profiles for testing different dashboard roles.         
+                                                           
+        
+-- ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ                                      
+                    
+                                                           
+                                                           
+        
+-- Note: These IDs should ideally be real auth.users(id) 
+from your Supabase Auth.                                   
+          
+-- We use fixed UUIDs here for deterministic demo data.    
+                                                           
+        
+                                                           
+                                                           
+        
+INSERT INTO profiles (id, name, role, status, 
+jurisdiction_type, jurisdiction_id)                        
+                     
+VALUES                                                     
+                                                           
+        
+    ('00000000-0000-0000-0000-00000000000a', 'Super Admin 
+User', 'super_admin', 'active', 'national', NULL),         
+         
+    ('00000000-0000-0000-0000-00000000000b', 'Varanasi 
+District Admin', 'district_admin', 'active', 'district', 
+1),           
+    ('00000000-0000-0000-0000-00000000000c', 'Shivpur 
+Constituency Admin', 'constituency_admin', 'active', 
+'constituency', 1),
+    ('00000000-0000-0000-0000-00000000000d', 'Booth 42 
+Worker', 'booth_worker', 'active', 'booth', 1),            
+            
+    ('00000000-0000-0000-0000-00000000000e', 'Amit Singh 
+(Candidate)', 'candidate', 'active', 'constituency', 1)    
+          
+Try rerunning the command with --debug to troubleshoot the 
+error.

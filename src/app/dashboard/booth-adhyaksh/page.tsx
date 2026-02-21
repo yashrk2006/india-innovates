@@ -108,13 +108,13 @@ export default function BoothAdhyakshDashboard() {
 
                 <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto">
                     <NavLabel text="Operations" />
-                    <NavItem icon="dashboard" label="Booth Overview" active />
-                    <NavItem icon="groups" label="Worker Tracker" />
-                    <NavItem icon="checklist" label="Today's Tasks" />
+                    <NavItem icon="dashboard" label="Booth Overview" active href="/dashboard/booth-adhyaksh" />
+                    <NavItem icon="groups" label="Worker Status" href="/dashboard/booth-adhyaksh/worker-status" />
+                    <NavItem icon="map" label="Voter Map" href="/dashboard/booth-adhyaksh/voter-map" />
 
-                    <NavLabel text="Voter Data" />
-                    <NavItem icon="person_search" label="Voter List" />
-                    <NavItem icon="how_to_vote" label="Contact Status" />
+                    <NavLabel text="Management" />
+                    <NavItem icon="bug_report" label="Issue Tracker" href="/dashboard/booth-adhyaksh/issue-tracker" />
+                    <NavItem icon="checklist" label="Today's Tasks" />
                     <NavItem icon="feedback" label="Voter Feedback" />
 
                     <NavLabel text="Reports" />

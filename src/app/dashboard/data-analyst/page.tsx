@@ -123,9 +123,9 @@ export default function DataAnalystDashboard() {
 
                 <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto">
                     <NavLabel text="Analysis" />
-                    <NavItem icon="dashboard" label="Overview" active />
+                    <NavItem icon="dashboard" label="Overview" active href="/dashboard/data-analyst" />
                     <NavItem icon="bubble_chart" label="Knowledge Graph" />
-                    <NavItem icon="group" label="Voter Segments" />
+                    <NavItem icon="group" label="Voter Segments" href="/dashboard/data-analyst/voter-segments" />
 
                     <NavLabel text="Intelligence" />
                     <NavItem icon="psychology" label="Sentiment Engine" />

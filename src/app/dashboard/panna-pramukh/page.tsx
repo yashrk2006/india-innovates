@@ -105,9 +105,9 @@ export default function PannaPramukhDashboard() {
 
                 <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto">
                     <NavLabel text="My Pages" />
-                    <NavItem icon="dashboard" label="Overview" active />
-                    <NavItem icon="list_alt" label="Voter List" />
-                    <NavItem icon="phone_callback" label="Call Queue" />
+                    <NavItem icon="dashboard" label="Overview" active href="/dashboard/panna-pramukh" />
+                    <NavItem icon="list_alt" label="Voter List" href="/dashboard/panna-pramukh/voter-list" />
+                    <NavItem icon="phone_callback" label="Call Queue" href="/dashboard/panna-pramukh/call-queue" />
 
                     <NavLabel text="Actions" />
                     <NavItem icon="add_circle" label="Log Contact" />

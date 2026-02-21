@@ -1,0 +1,129 @@
+﻿node.exe : open supabase\.temp\profile: The system cannot 
+find the file specified.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (open supabase 
+   \....file specified.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Loading project ref from file: supabase\.temp\project-ref
+Resolved DNS: [2406:da1c:f42:ae0c:4a0:58a9:9cd8:7e81]:5432
+Initialising login role...
+Using access token for profile: supabase
+Supabase CLI 2.76.12
+Using profile: supabase (supabase.co)
+Connecting to remote database...
+2026/02/21 01:39:22 PG Send: {"Type":"StartupMessage","Prot
+ocolVersion":196608,"Parameters":{"database":"postgres","us
+er":"cli_login_postgres"}}
+2026/02/21 01:39:23 PG Recv: {"Type":"AuthenticationSASL","
+AuthMechanisms":["SCRAM-SHA-256"]}
+2026/02/21 01:39:23 PG Send: {"Type":"SASLInitialResponse",
+"AuthMechanism":"SCRAM-SHA-256","Data":"n,,n=,r=NaSE96gzrqM
+7tGfU8GUtT4ox"}
+2026/02/21 01:39:23 PG Recv: {"Type":"AuthenticationSASLCon
+tinue","Data":"r=NaSE96gzrqM7tGfU8GUtT4oxdUCJh0PHO5Bj4WekwU
+gOOX75,s=gfRo95m129P9CB/Iy/7L0w==,i=4096"}
+2026/02/21 01:39:23 PG Send: {"Type":"SASLResponse","Data":
+"c=biws,r=NaSE96gzrqM7tGfU8GUtT4oxdUCJh0PHO5Bj4WekwUgOOX75,
+p=6X9J5StdOYwptt/Kt3cl0FENC94pHmctrBypIm2GI6w="}
+2026/02/21 01:39:23 PG Recv: {"Type":"AuthenticationSASLFin
+al","Data":"v=NkAn/Hd+MwpiBjxRAHdB1wvjgPjQF9IAYn3GlZqU/7c="
+}
+2026/02/21 01:39:23 PG Recv: {"Type":"AuthenticationOK"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"in_hot_standby","Value":"off"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"integer_datetimes","Value":"on"}
+2026/02/21 01:39:23 PG Recv: 
+{"Type":"ParameterStatus","Name":"TimeZone","Value":"UTC"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"IntervalStyle","Value":"postgres"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"is_superuser","Value":"off"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"application_name","Value":""}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"default_transaction_read_only","Value":"off"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"scram_iterations","Value":"4096"}
+2026/02/21 01:39:23 PG Recv: 
+{"Type":"ParameterStatus","Name":"DateStyle","Value":"ISO, 
+MDY"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"standard_conforming_strings","Value":"on"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"session_authorization","Value":"cli_login_postgres"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"client_encoding","Value":"UTF8"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"server_version","Value":"17.6"}
+2026/02/21 01:39:23 PG Recv: {"Type":"ParameterStatus","Nam
+e":"server_encoding","Value":"UTF8"}
+2026/02/21 01:39:23 PG Recv: {"Type":"BackendKeyData","Proc
+essID":24937,"SecretKey":585374755}
+2026/02/21 01:39:23 PG Recv: 
+{"Type":"ReadyForQuery","TxStatus":"I"}
+2026/02/21 01:39:23 PG Send: {"Type":"Query","String":"SET 
+SESSION ROLE postgres"}
+2026/02/21 01:39:23 PG Recv: 
+{"Type":"CommandComplete","CommandTag":"SET"}
+2026/02/21 01:39:23 PG Recv: 
+{"Type":"ReadyForQuery","TxStatus":"I"}
+2026/02/21 01:39:23 PG Send: 
+{"Type":"Parse","Name":"lrupsc_1_0","Query":"SELECT 
+version FROM supabase_migrations.schema_migrations ORDER 
+BY version","ParameterOIDs":null}
+2026/02/21 01:39:23 PG Send: 
+{"Type":"Describe","ObjectType":"S","Name":"lrupsc_1_0"}
+2026/02/21 01:39:23 PG Send: {"Type":"Sync"}
+2026/02/21 01:39:24 PG Recv: {"Type":"ParseComplete"}
+2026/02/21 01:39:24 PG Recv: 
+{"Type":"ParameterDescription","ParameterOIDs":[]}
+2026/02/21 01:39:24 PG Recv: {"Type":"RowDescription","Fiel
+ds":[{"Name":"version","TableOID":20624,"TableAttributeNumb
+er":1,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,
+"Format":0}]}
+2026/02/21 01:39:24 PG Recv: 
+{"Type":"ReadyForQuery","TxStatus":"I"}
+2026/02/21 01:39:24 PG Send: {"Type":"Bind","DestinationPor
+tal":"","PreparedStatement":"lrupsc_1_0","ParameterFormatCo
+des":null,"Parameters":[],"ResultFormatCodes":[0]}
+2026/02/21 01:39:24 PG Send: 
+{"Type":"Describe","ObjectType":"P","Name":""}
+2026/02/21 01:39:24 PG Send: 
+{"Type":"Execute","Portal":"","MaxRows":0}
+2026/02/21 01:39:24 PG Send: {"Type":"Sync"}
+2026/02/21 01:39:24 PG Recv: {"Type":"BindComplete"}
+2026/02/21 01:39:24 PG Recv: {"Type":"RowDescription","Fiel
+ds":[{"Name":"version","TableOID":20624,"TableAttributeNumb
+er":1,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,
+"Format":0}]}
+2026/02/21 01:39:24 PG Recv: 
+{"Type":"DataRow","Values":[{"text":"20260101000000"}]}
+2026/02/21 01:39:24 PG Recv: 
+{"Type":"CommandComplete","CommandTag":"SELECT 1"}
+2026/02/21 01:39:24 PG Recv: 
+{"Type":"ReadyForQuery","TxStatus":"I"}
+Do you want to push these migrations to the remote 
+database?
+ ΓÇó 20260221000000_seed.sql
+
+ [Y/n] panic: read tcp [2409:40d0:139d:b907:6492:adb0:cc83:
+efa5]:57087->[2406:da1c:f42:ae0c:4a0:58a9:9cd8:7e81]:5432: 
+wsarecv: An established connection was aborted by the 
+software in your host machine.
+
+goroutine 47 [running]:
+github.com/supabase/cli/internal/debug.(*Proxy).DialFunc.fu
+nc1()
+	github.com/supabase/cli/internal/debug/postgres.go:68 
++0x42e
+created by 
+github.com/supabase/cli/internal/debug.(*Proxy).DialFunc 
+in goroutine 1
+	github.com/supabase/cli/internal/debug/postgres.go:47 
++0x145

@@ -1,306 +1,386 @@
 "use client";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import ECIPageLayout, { ECICard, ECISectionHeader, ECIKPI } from "@/components/eci/ECIPageLayout";
 
-
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-
-/* ── Icon helper ── */
-function Icon({ name, className = "", size, style }: { name: string; className?: string; size?: number; style?: React.CSSProperties }) {
-    return <span className={`material-symbols-outlined ${className}`} style={{ ...(size ? { fontSize: size } : {}), ...style }}>{name}</span>;
+function Icon({ name, size = 16, className = "" }: { name: string; size?: number; className?: string }) {
+    return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size }}>{name}</span>;
 }
 
-/* ── KPI Card ── */
-function KPI({ icon, label, value, sub, color = "var(--gold)" }: { icon: string; label: string; value: string; sub?: string; color?: string }) {
+function Bar({ pct, color = "#f87171", h = 5 }: { pct: number; color?: string; h?: number }) {
     return (
-        <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded p-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
-            <div className="flex justify-between items-start">
-                <div>
-                    <p className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f0ece3]/25 mb-2">{label}</p>
-                    <p className="font-serif text-[28px] font-bold text-[#f0ece3] leading-none">{value}</p>
-                    {sub && <p className="font-mono text-[9px] mt-1.5" style={{ color }}>{sub}</p>}
+        <div className="bg-white/5 rounded-full overflow-hidden" style={{ height: h }}>
+            <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1 }}
+                className="rounded-full" style={{ background: color, height: h }} />
+        </div>
+    );
+}
+
+/* ══════════════════════════════ DATA ══════════════════════════════ */
+
+const stateAlerts = [
+    { state: "Uttar Pradesh", booths: 1240, violations: 34, turnout: 62, evmIssues: 3, observers: 186, status: "HIGH ALERT" },
+    { state: "Maharashtra", booths: 890, violations: 12, turnout: 58, evmIssues: 0, observers: 134, status: "NORMAL" },
+    { state: "Bihar", booths: 720, violations: 28, turnout: 55, evmIssues: 2, observers: 108, status: "CAUTION" },
+    { state: "West Bengal", booths: 670, violations: 8, turnout: 71, evmIssues: 0, observers: 101, status: "NORMAL" },
+    { state: "Tamil Nadu", booths: 590, violations: 5, turnout: 68, evmIssues: 1, observers: 89, status: "NORMAL" },
+    { state: "Rajasthan", booths: 460, violations: 19, turnout: 51, evmIssues: 1, observers: 69, status: "CAUTION" },
+];
+
+const recentEvents = [
+    { time: "5:12 PM", event: "EVM malfunction reported – Booth 87, Lucknow North", level: "CRITICAL", icon: "error", category: "EVM" },
+    { time: "5:08 PM", event: "Voter intimidation report via cVIGIL – Ward 7, Varanasi", level: "HIGH", icon: "warning", category: "cVIGIL" },
+    { time: "4:55 PM", event: "Phase 2 turnout crosses 60% — national milestone", level: "INFO", icon: "trending_up", category: "Turnout" },
+    { time: "4:42 PM", event: "Bihar turnout below 55% threshold — auto alert dispatched", level: "HIGH", icon: "warning", category: "Turnout" },
+    { time: "4:30 PM", event: "₹12L unaccounted cash seized near Kanpur booth by FST", level: "CRITICAL", icon: "error", category: "MCC" },
+    { time: "4:15 PM", event: "UP Phase-2 polling completion tracking at 94%", level: "INFO", icon: "check_circle", category: "Status" },
+    { time: "3:58 PM", event: "Meerut CCTV Feed #BTH-009 — AI flagged crowd anomaly", level: "MEDIUM", icon: "videocam", category: "CCTV" },
+    { time: "3:42 PM", event: "cVIGIL #CVG-4421: Cash distribution video verified", level: "HIGH", icon: "verified", category: "cVIGIL" },
+    { time: "3:30 PM", event: "VVPAT paper trail mismatch — Booth 56, Prayagraj", level: "CRITICAL", icon: "error", category: "EVM" },
+];
+
+const evmStatus = [
+    { label: "Total EVMs Deployed", value: "18,420", icon: "ballot", color: "#60a5fa" },
+    { label: "Functioning Normal", value: "18,391", icon: "check_circle", color: "#4ade80" },
+    { label: "Replaced Today", value: "24", icon: "swap_horiz", color: "#fbbf24" },
+    { label: "Under Investigation", value: "5", icon: "search", color: "#f87171" },
+];
+
+const vvpatStatus = { total: 18420, verified: 18398, mismatch: 3, pending: 19 };
+
+const cvigilComplaints = [
+    { id: "CVG-4425", type: "Cash Distribution", location: "Bareilly, Ward 3", time: "5:05 PM", status: "PENDING", media: "Video", gps: true },
+    { id: "CVG-4424", type: "Intimidation", location: "Lucknow South", time: "4:52 PM", status: "ASSIGNED", media: "Photo + Audio", gps: true },
+    { id: "CVG-4423", type: "Liquor Distribution", location: "Gorakhpur, Ward 8", time: "4:38 PM", status: "RESOLVED", media: "Video", gps: true },
+    { id: "CVG-4422", type: "Campaigning in Silence", location: "Meerut", time: "4:21 PM", status: "ASSIGNED", media: "Photo", gps: true },
+    { id: "CVG-4421", type: "Cash Distribution", location: "Kanpur South", time: "3:42 PM", status: "FIR FILED", media: "Video", gps: true },
+];
+
+const observerDeployment = [
+    { role: "General Observer", deployed: 312, total: 320, color: "#60a5fa" },
+    { role: "Expenditure Observer", deployed: 156, total: 160, color: "#fbbf24" },
+    { role: "Police Observer", deployed: 155, total: 160, color: "#f87171" },
+    { role: "Micro Observer", deployed: 189, total: 200, color: "#818cf8" },
+];
+
+const hourlyTurnout = [
+    { hour: "7AM", pct: 3 }, { hour: "8AM", pct: 8 }, { hour: "9AM", pct: 16 },
+    { hour: "10AM", pct: 26 }, { hour: "11AM", pct: 35 }, { hour: "12PM", pct: 42 },
+    { hour: "1PM", pct: 47 }, { hour: "2PM", pct: 53 }, { hour: "3PM", pct: 58 },
+    { hour: "4PM", pct: 63 }, { hour: "5PM", pct: 67 },
+];
+
+const expenditureAlerts = [
+    { candidate: "Shri Ramesh Agarwal", constituency: "Lucknow North", spent: 42.3, limit: 75, flag: false },
+    { candidate: "Smt. Priya Mishra", constituency: "Varanasi", spent: 68.1, limit: 75, flag: true },
+    { candidate: "Shri Karan Singh", constituency: "Kanpur South", spent: 71.8, limit: 75, flag: true },
+    { candidate: "Dr. Anita Das", constituency: "Gorakhpur", spent: 35.6, limit: 75, flag: false },
+];
+
+const levelColor: Record<string, string> = { CRITICAL: "#f87171", HIGH: "#fbbf24", MEDIUM: "#60a5fa", INFO: "#4ade80" };
+const statusColor: Record<string, string> = { "HIGH ALERT": "#f87171", CAUTION: "#fbbf24", NORMAL: "#4ade80" };
+const cvigilStatusColor: Record<string, string> = { PENDING: "#f87171", ASSIGNED: "#fbbf24", RESOLVED: "#4ade80", "FIR FILED": "#f87171" };
+
+export default function ECICommandCenter() {
+    const [clock, setClock] = useState("");
+    const [eventFilter, setEventFilter] = useState("ALL");
+    const [diaryEntry, setDiaryEntry] = useState("");
+    const [diaryEntries, setDiaryEntries] = useState([
+        { time: "4:00 PM", text: "Visited Booth 142, Ward 12. Polling proceeding smoothly. Voter queue ~15 min wait." },
+        { time: "2:30 PM", text: "Sector magistrate briefing completed. All FSTs operational." },
+        { time: "11:00 AM", text: "Mock poll completed successfully at all assigned booths. EVMs sealed." },
+    ]);
+
+    useEffect(() => {
+        setClock(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+        const t = setInterval(() => setClock(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })), 1000);
+        return () => clearInterval(t);
+    }, []);
+
+    const filteredEvents = eventFilter === "ALL" ? recentEvents : recentEvents.filter(e => e.category === eventFilter);
+    const maxPct = Math.max(...hourlyTurnout.map(h => h.pct));
+
+    const addDiaryEntry = () => {
+        if (!diaryEntry.trim()) return;
+        setDiaryEntries([{ time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }).toUpperCase(), text: diaryEntry }, ...diaryEntries]);
+        setDiaryEntry("");
+    };
+
+    return (
+        <ECIPageLayout title="National Command Center" badge="🟢 SYSTEM ONLINE" badgeColor="#4ade80"
+            actions={
+                <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-mono text-white/35 tracking-widest">Phase 2 · General Election 2026</span>
+                    <span className="text-[13px] font-mono text-red-400 font-bold tabular-nums">{clock} IST</span>
+                    <button className="text-[9px] font-mono px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all flex items-center gap-1.5 shadow-lg shadow-red-600/20">
+                        <Icon name="emergency" size={14} /> EMERGENCY
+                    </button>
                 </div>
-                <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: color + "18", border: `1px solid ${color}30` }}>
-                    <Icon name={icon} size={14} className="text-[#c9a84c]" />
+            }
+        >
+            {/* ── KPI Row ── */}
+            <div className="grid grid-cols-6 gap-3 mb-6">
+                <ECIKPI icon="how_to_vote" label="National Turnout" value="62.9%" sub="↑ 3.1% vs Phase 1" color="#4ade80" delay={0} />
+                <ECIKPI icon="location_on" label="Active Booths" value="4,570" sub="28 states" color="#60a5fa" delay={0.05} />
+                <ECIKPI icon="visibility" label="Observers" value="812" sub="97.1% deployed" color="#818cf8" delay={0.1} />
+                <ECIKPI icon="warning" label="Violations" value="106" sub="34 critical" color="#f87171" delay={0.15} />
+                <ECIKPI icon="ballot" label="EVM Issues" value="5" sub="99.97% healthy" color="#fbbf24" delay={0.2} />
+                <ECIKPI icon="phone_in_talk" label="cVIGIL" value="24" sub="5 pending" color="#f472b6" delay={0.25} />
+            </div>
+
+            {/* ── ROW 1: Events + EVM/VVPAT ── */}
+            <div className="grid grid-cols-[1.4fr_1fr] gap-5 mb-5">
+                {/* Live Event Feed */}
+                <ECICard>
+                    <ECISectionHeader title="Live Event Feed" icon="rss_feed"
+                        action={
+                            <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-mono text-red-400 animate-pulse mr-2">● LIVE</span>
+                                {["ALL", "EVM", "cVIGIL", "MCC", "Turnout"].map(f => (
+                                    <button key={f} onClick={() => setEventFilter(f)}
+                                        className={`text-[8px] font-mono px-2 py-0.5 rounded transition-all ${eventFilter === f ? "bg-red-500/15 text-red-400" : "text-white/25 hover:text-white/50"}`}
+                                    >{f}</button>
+                                ))}
+                            </div>
+                        }
+                    />
+                    <div className="divide-y divide-white/[0.03] max-h-[320px] overflow-y-auto">
+                        <AnimatePresence>
+                            {filteredEvents.map((e, i) => (
+                                <motion.div key={e.time + e.event}
+                                    initial={{ opacity: 0, x: -15 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 15 }}
+                                    transition={{ delay: i * 0.04 }}
+                                    className="px-5 py-3 flex items-start gap-3 hover:bg-white/[0.02] transition-colors cursor-pointer group"
+                                >
+                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: levelColor[e.level] + "12" }}>
+                                        <Icon name={e.icon} size={14} style={{ color: levelColor[e.level] }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[11px] text-white/75 leading-relaxed group-hover:text-white/90 transition-colors">{e.event}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: levelColor[e.level], background: levelColor[e.level] + "12" }}>{e.level}</span>
+                                            <span className="text-[7px] font-mono text-white/20 bg-white/5 px-1.5 py-0.5 rounded">{e.category}</span>
+                                            <span className="text-[7px] font-mono text-white/15">{e.time}</span>
+                                        </div>
+                                    </div>
+                                    <button className="opacity-0 group-hover:opacity-100 text-[8px] font-mono text-red-400 px-2 py-1 rounded bg-red-500/10 transition-all shrink-0">ACTION</button>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                </ECICard>
+
+                {/* EVM / VVPAT Status */}
+                <div className="space-y-4">
+                    <ECICard delay={0.1}>
+                        <ECISectionHeader title="EVM / VVPAT Status" icon="ballot" />
+                        <div className="p-4 grid grid-cols-2 gap-3">
+                            {evmStatus.map((e, i) => (
+                                <motion.div key={e.label} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 + i * 0.06 }}
+                                    className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <Icon name={e.icon} size={12} style={{ color: e.color }} />
+                                        <span className="text-[8px] font-mono text-white/30 uppercase tracking-wider">{e.label}</span>
+                                    </div>
+                                    <span className="text-[18px] font-bold text-white/90">{e.value}</span>
+                                </motion.div>
+                            ))}
+                        </div>
+                        {/* VVPAT Audit */}
+                        <div className="px-4 pb-4">
+                            <div className="p-3 rounded-lg bg-gradient-to-r from-green-500/5 to-transparent border border-green-500/10">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-[9px] font-mono text-green-400 tracking-wide">VVPAT VERIFICATION</span>
+                                    <span className="text-[9px] font-mono text-green-400">{((vvpatStatus.verified / vvpatStatus.total) * 100).toFixed(1)}%</span>
+                                </div>
+                                <Bar pct={(vvpatStatus.verified / vvpatStatus.total) * 100} color="#4ade80" h={4} />
+                                <div className="flex justify-between text-[8px] font-mono text-white/25 mt-1.5">
+                                    <span>{vvpatStatus.verified.toLocaleString()} verified</span>
+                                    <span className="text-red-400">{vvpatStatus.mismatch} mismatch</span>
+                                    <span>{vvpatStatus.pending} pending</span>
+                                </div>
+                            </div>
+                        </div>
+                    </ECICard>
+
+                    {/* Observer Deployment */}
+                    <ECICard delay={0.15}>
+                        <ECISectionHeader title="Observer Deployment" icon="groups" />
+                        <div className="p-4 space-y-2.5">
+                            {observerDeployment.map((o, i) => (
+                                <motion.div key={o.role} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 + i * 0.06 }}
+                                    className="flex items-center gap-3">
+                                    <span className="text-[10px] text-white/50 w-36 shrink-0">{o.role}</span>
+                                    <div className="flex-1"><Bar pct={(o.deployed / o.total) * 100} color={o.color} h={4} /></div>
+                                    <span className="text-[10px] font-mono text-white/60 w-16 text-right">{o.deployed}/{o.total}</span>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </ECICard>
                 </div>
             </div>
-        </div>
-    );
-}
 
-/* ── Progress Bar ── */
-function Bar({ pct, color = "var(--gold)", h = 4 }: { pct: number; color?: string; h?: number }) {
-    return (
-        <div className="bg-[rgba(255,255,255,0.05)] rounded-sm overflow-hidden" style={{ height: h }}>
-            <div className="rounded-sm transition-all duration-1000 ease-out" style={{ width: `${pct}%`, background: color, height: h }} />
-        </div>
-    );
-}
-
-/* ── Sidebar Nav Item ── */
-function NavItem({ icon, label, active = false, href = "#" }: { icon: string; label: string; active?: boolean; href?: string }) {
-    return (
-        <Link href={href} className={`flex items-center gap-2.5 px-3.5 py-2 rounded text-[11px] font-mono tracking-[0.5px] border-l-2 transition-all cursor-pointer select-none ${active ? "text-[#c9a84c] bg-[rgba(201,168,76,0.12)] border-l-[#c9a84c]" : "text-[#f0ece3]/25 border-l-transparent hover:text-[#f0ece3]/65 hover:bg-[#f0ece3]/[0.03] hover:border-l-[rgba(201,168,76,0.14)]"}`}>
-            <Icon name={icon} size={16} />
-            <span>{label}</span>
-        </Link>
-    );
-}
-
-function NavLabel({ text }: { text: string }) {
-    return <p className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f0ece3]/25 px-3.5 pt-3 pb-1">{text}</p>;
-}
-
-/* ══════════════════════════════════════════════════════════
-   ECI OBSERVER – National Oversight Dashboard
-   ══════════════════════════════════════════════════════════ */
-export default function ECIObserverDashboard() {
-    const router = useRouter();
-
-    const handleLogout = () => {
-        document.cookie = "user_role=; path=/; max-age=0";
-        router.push("/auth?role=eci-observer");
-    };
-
-    /* Mock Data */
-    const stateData = [
-        { state: "Uttar Pradesh", booths: "1,64,000", turnout: 62, violations: 14, status: "MONITORED" },
-        { state: "Maharashtra", booths: "96,400", turnout: 58, violations: 8, status: "CLEAR" },
-        { state: "Tamil Nadu", booths: "68,700", turnout: 71, violations: 3, status: "CLEAR" },
-        { state: "West Bengal", booths: "78,300", turnout: 65, violations: 22, status: "ALERT" },
-        { state: "Bihar", booths: "72,800", turnout: 54, violations: 18, status: "ALERT" },
-        { state: "Rajasthan", booths: "52,100", turnout: 59, violations: 5, status: "CLEAR" },
-        { state: "Karnataka", booths: "58,400", turnout: 63, violations: 9, status: "MONITORED" },
-        { state: "Madhya Pradesh", booths: "54,600", turnout: 61, violations: 7, status: "CLEAR" },
-    ];
-
-    const violations = [
-        { time: "14:58", type: "EVM Tamper Alert", loc: "Booth 142, WB", severity: "CRITICAL", icon: "error" },
-        { time: "14:42", type: "Voter Intimidation", loc: "Ward 8, Bihar", severity: "HIGH", icon: "warning" },
-        { time: "14:30", type: "Camera Offline", loc: "Booth 89, UP", severity: "MEDIUM", icon: "videocam_off" },
-        { time: "14:18", type: "Booth Unattended", loc: "Booth 205, WB", severity: "HIGH", icon: "person_off" },
-        { time: "14:05", type: "Polling Delay", loc: "Ward 3, Bihar", severity: "MEDIUM", icon: "schedule" },
-        { time: "13:50", type: "ID Mismatch", loc: "Booth 67, UP", severity: "LOW", icon: "badge" },
-    ];
-
-    const severityColor: Record<string, string> = {
-        CRITICAL: "#ef4444", HIGH: "#f97316", MEDIUM: "#fbbf24", LOW: "#6b7280"
-    };
-
-    const statusColor: Record<string, string> = {
-        CLEAR: "#4ade80", MONITORED: "#c9a84c", ALERT: "#f87171"
-    };
-
-    const statusBg: Record<string, string> = {
-        CLEAR: "rgba(74,222,128,0.08)", MONITORED: "rgba(201,168,76,0.12)", ALERT: "rgba(248,113,113,0.08)"
-    };
-
-    /* Turnout Hourly Data */
-    const hourlyTurnout = [
-        { hour: "7AM", pct: 4 }, { hour: "8AM", pct: 12 }, { hour: "9AM", pct: 22 },
-        { hour: "10AM", pct: 35 }, { hour: "11AM", pct: 44 }, { hour: "12PM", pct: 51 },
-        { hour: "1PM", pct: 55 }, { hour: "2PM", pct: 60 }, { hour: "3PM", pct: 65 },
-    ];
-
-    return (
-        <div className="flex h-screen bg-[#08090f] text-[#f0ece3] overflow-hidden" style={{ fontFamily: "'Public Sans', 'Literata', serif" }}>
-            {/* ─── Left Sidebar ─── */}
-            <aside className="w-64 bg-[#0d0f1a] border-r border-[rgba(201,168,76,0.14)] flex flex-col flex-shrink-0">
-                <div className="p-5 border-b border-[rgba(255,255,255,0.05)]">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-[#08090f]">
-                            <Icon name="visibility" size={18} />
-                        </div>
-                        <div>
-                            <h1 className="text-white text-sm font-bold tracking-tight leading-none">ECI OBSERVER</h1>
-                            <span className="text-[9px] font-mono text-white/50 tracking-[2px] uppercase">Oversight Panel</span>
-                        </div>
+            {/* ── ROW 2: cVIGIL + Turnout + Expenditure ── */}
+            <div className="grid grid-cols-3 gap-5 mb-5">
+                {/* cVIGIL Complaints */}
+                <ECICard delay={0.2}>
+                    <ECISectionHeader title="cVIGIL Complaints" icon="phone_in_talk"
+                        action={<span className="text-[8px] font-mono text-fuchsia-400">{cvigilComplaints.filter(c => c.status === "PENDING").length} pending</span>} />
+                    <div className="divide-y divide-white/[0.03] max-h-[260px] overflow-y-auto">
+                        {cvigilComplaints.map((c, i) => (
+                            <motion.div key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 + i * 0.05 }}
+                                className="px-4 py-3 hover:bg-white/[0.02] cursor-pointer transition-colors">
+                                <div className="flex justify-between items-start mb-1">
+                                    <span className="text-[11px] text-white/80 font-medium">{c.type}</span>
+                                    <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: cvigilStatusColor[c.status], background: cvigilStatusColor[c.status] + "15" }}>{c.status}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[9px] text-white/30 font-mono">
+                                    <span>{c.id}</span>
+                                    <span>📍{c.location}</span>
+                                    <span>🕐{c.time}</span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <span className="text-[8px] bg-white/5 text-white/35 px-1.5 py-0.5 rounded font-mono">📎 {c.media}</span>
+                                    {c.gps && <span className="text-[8px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded font-mono">📍 GPS</span>}
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
-                </div>
+                </ECICard>
 
-                <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto">
-                    <NavLabel text="Overview" />
-                    <NavItem icon="dashboard" label="Command Center" active />
-                    <NavItem icon="map" label="State Map" />
-                    <NavItem icon="query_stats" label="Turnout Monitor" />
-
-                    <NavLabel text="Compliance" />
-                    <NavItem icon="shield" label="Violation Tracker" />
-                    <NavItem icon="videocam" label="CCTV Feeds" />
-                    <NavItem icon="gavel" label="Code Violations" />
-
-                    <NavLabel text="Reports" />
-                    <NavItem icon="assessment" label="Interim Reports" />
-                    <NavItem icon="archive" label="Final Submissions" />
-                </nav>
-
-                <div className="p-4 border-t border-[rgba(255,255,255,0.05)]">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#111520] border border-white/20 flex items-center justify-center text-white font-serif font-bold text-sm">
-                            SR
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-white text-xs font-medium truncate">S. Raghunath</p>
-                            <p className="text-[#f0ece3]/25 text-[9px] font-mono truncate">Gen. Observer</p>
-                        </div>
-                        <button onClick={handleLogout} className="text-[#f0ece3]/25 hover:text-red-400 transition-colors">
-                            <Icon name="logout" size={16} />
-                        </button>
-                    </div>
-                </div>
-            </aside>
-
-            {/* ─── Main Content ─── */}
-            <main className="flex-1 overflow-y-auto">
-                <header className="sticky top-0 z-40 bg-[#08090f]/95 backdrop-blur-sm border-b border-[rgba(255,255,255,0.05)] px-6 py-3.5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <h2 className="text-white text-lg font-serif font-bold">National Oversight Command</h2>
-                        <span className="font-mono text-[9px] text-[#f87171] tracking-[1.5px] uppercase bg-[rgba(248,113,113,0.08)] px-2 py-0.5 rounded border border-[rgba(248,113,113,0.2)]">
-                            ● {violations.length} ACTIVE ALERTS
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <span className="font-mono text-[10px] text-[#f0ece3]/40">Phase III · 15:02 IST</span>
-                        <button className="font-mono text-[10px] tracking-[1px] uppercase bg-[#e8761a] hover:bg-[#e8761a]/90 text-white px-4 py-1.5 rounded transition-all">
-                            File Report
-                        </button>
-                    </div>
-                </header>
-
-                <div className="p-6 space-y-6">
-                    {/* ── KPI Row ── */}
-                    <div className="grid grid-cols-6 gap-4">
-                        <KPI icon="how_to_vote" label="Total Electors" value="96.8Cr" sub="2024 General" />
-                        <KPI icon="ballot" label="National Turnout" value="60.2%" sub="↑ 2.1% from 2019" color="#4ade80" />
-                        <KPI icon="location_on" label="Booths Active" value="10.5L" sub="of 10.6L total" color="#c9a84c" />
-                        <KPI icon="error" label="Total Violations" value="86" sub="14 Critical" color="#f87171" />
-                        <KPI icon="videocam" label="CCTV Active" value="98.7%" sub="1,342 offline" color="#e8761a" />
-                        <KPI icon="verified_user" label="VVPAT Verified" value="99.4%" sub="All within margin" color="#4ade80" />
-                    </div>
-
-                    {/* ── Main Grid ── */}
-                    <div className="grid grid-cols-[1.4fr_1fr] gap-6">
-                        {/* Left: State-wise Table */}
-                        <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                            <div className="bg-[#161b28] px-4 py-3 flex items-center justify-between border-b border-[rgba(255,255,255,0.05)]">
-                                <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#c9a84c] flex items-center gap-2">
-                                    <Icon name="public" size={12} /> State-wise Election Monitor
-                                </h3>
-                                <button className="font-mono text-[9px] tracking-[1px] uppercase text-[#f0ece3]/25 hover:text-[#c9a84c] border border-[rgba(255,255,255,0.05)] hover:border-[#c9a84c] px-3 py-1 rounded transition-all">
-                                    Download
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-[1fr_100px_120px_80px_100px] gap-2 px-4 py-2.5 border-b border-[rgba(255,255,255,0.05)] font-mono text-[9px] tracking-[1px] uppercase text-[#f0ece3]/25">
-                                <span>State</span>
-                                <span>Booths</span>
-                                <span>Turnout %</span>
-                                <span>Violations</span>
-                                <span>Status</span>
-                            </div>
-                            {stateData.map((s, i) => (
-                                <div key={s.state} className={`grid grid-cols-[1fr_100px_120px_80px_100px] gap-2 px-4 py-2.5 border-b border-[rgba(255,255,255,0.03)] hover:bg-[#f0ece3]/[0.02] transition-colors cursor-pointer items-center ${i % 2 === 0 ? "" : "bg-[#0d0f1a]/30"}`}>
-                                    <span className="text-[11px] text-white/80 font-medium">{s.state}</span>
-                                    <span className="font-mono text-[11px] text-[#f0ece3]/50">{s.booths}</span>
-                                    <div className="flex items-center gap-2">
-                                        <Bar pct={s.turnout} color={s.turnout > 65 ? "#4ade80" : s.turnout > 55 ? "#c9a84c" : "#fbbf24"} h={3} />
-                                        <span className="font-mono text-[10px] text-[#f0ece3]/40 w-8 text-right">{s.turnout}%</span>
-                                    </div>
-                                    <span className={`font-mono text-[11px] ${s.violations > 15 ? "text-[#f87171] font-bold" : s.violations > 10 ? "text-[#fbbf24]" : "text-[#f0ece3]/40"}`}>
-                                        {s.violations}
-                                    </span>
-                                    <span className="font-mono text-[9px] tracking-[1px] uppercase px-2 py-0.5 rounded text-center" style={{ background: statusBg[s.status], color: statusColor[s.status], border: `1px solid ${statusColor[s.status]}30` }}>
-                                        {s.status}
-                                    </span>
+                {/* Hourly Turnout */}
+                <ECICard delay={0.25}>
+                    <ECISectionHeader title="Hourly Turnout" icon="show_chart" />
+                    <div className="p-4">
+                        <div className="flex items-end gap-1.5 h-36 mb-2">
+                            {hourlyTurnout.map((d, i) => (
+                                <div key={d.hour} className="flex-1 flex flex-col items-center gap-0.5">
+                                    <span className="text-[7px] font-mono text-white/40">{d.pct}%</span>
+                                    <motion.div initial={{ height: 0 }} animate={{ height: `${(d.pct / maxPct) * 100}%` }}
+                                        transition={{ duration: 0.7, delay: 0.3 + i * 0.04 }}
+                                        className="w-full rounded-t-sm"
+                                        style={{ background: d.pct > 60 ? "linear-gradient(to top, #059669, #4ade80)" : d.pct > 40 ? "linear-gradient(to top, #d97706, #fbbf24)" : "linear-gradient(to top, #dc2626, #f87171)" }} />
+                                    <span className="text-[6px] font-mono text-white/20">{d.hour}</span>
                                 </div>
                             ))}
                         </div>
-
-                        {/* Right: Violation Feed */}
-                        <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                            <div className="bg-[#161b28] px-4 py-3 flex items-center justify-between border-b border-[rgba(255,255,255,0.05)]">
-                                <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f87171] flex items-center gap-2">
-                                    <Icon name="gpp_maybe" size={12} /> Live Violation Feed
-                                </h3>
-                                <span className="font-mono text-[9px] text-[#f0ece3]/25">Auto-refresh</span>
+                        {/* Gender Split */}
+                        <div className="border-t border-white/[0.04] pt-3 mt-2 space-y-1.5">
+                            <div className="text-[8px] font-mono text-white/25 uppercase tracking-wider mb-1">Gender-wise Turnout</div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] text-white/40 w-14">Male</span>
+                                <div className="flex-1"><Bar pct={65} color="#60a5fa" h={4} /></div>
+                                <span className="text-[9px] font-mono text-white/50 w-8">65%</span>
                             </div>
-                            <div className="divide-y divide-[rgba(255,255,255,0.03)]">
-                                {violations.map((v, i) => (
-                                    <div key={i} className="px-4 py-3 hover:bg-[#f0ece3]/[0.02] transition-colors cursor-pointer">
-                                        <div className="flex items-center gap-2 mb-1.5">
-                                            <Icon name={v.icon} size={14} style={{ color: severityColor[v.severity] }} />
-                                            <span className="text-[11px] text-white font-medium flex-1">{v.type}</span>
-                                            <span className="font-mono text-[8px] tracking-[1px] px-1.5 py-0.5 rounded" style={{ background: severityColor[v.severity] + "15", color: severityColor[v.severity], border: `1px solid ${severityColor[v.severity]}30` }}>
-                                                {v.severity}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-[10px] text-[#f0ece3]/35 pl-5">
-                                            <Icon name="location_on" size={10} />
-                                            <span>{v.loc}</span>
-                                            <span className="ml-auto font-mono text-[9px]">{v.time}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] text-white/40 w-14">Female</span>
+                                <div className="flex-1"><Bar pct={61} color="#f472b6" h={4} /></div>
+                                <span className="text-[9px] font-mono text-white/50 w-8">61%</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] text-white/40 w-14">Other</span>
+                                <div className="flex-1"><Bar pct={43} color="#818cf8" h={4} /></div>
+                                <span className="text-[9px] font-mono text-white/50 w-8">43%</span>
                             </div>
                         </div>
                     </div>
+                </ECICard>
 
-                    {/* ── Bottom Row ── */}
-                    <div className="grid grid-cols-[1fr_1fr] gap-6">
-                        {/* Turnout Trend */}
-                        <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                            <div className="bg-[#161b28] px-4 py-3 border-b border-[rgba(255,255,255,0.05)]">
-                                <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#c9a84c] flex items-center gap-2">
-                                    <Icon name="trending_up" size={12} /> National Turnout Trend (Today)
-                                </h3>
-                            </div>
-                            <div className="p-4">
-                                <div className="flex items-end gap-4 h-36">
-                                    {hourlyTurnout.map(h => (
-                                        <div key={h.hour} className="flex flex-col items-center gap-1 flex-1">
-                                            <span className="font-mono text-[9px] text-[#c9a84c]">{h.pct}%</span>
-                                            <div className="w-full bg-[rgba(255,255,255,0.05)] rounded-t overflow-hidden flex-1 flex items-end">
-                                                <div className="w-full rounded-t transition-all duration-700" style={{ height: `${(h.pct / 70) * 100}%`, background: h.pct > 50 ? "#4ade80" : "#c9a84c" }} />
-                                            </div>
-                                            <span className="font-mono text-[8px] text-[#f0ece3]/25">{h.hour}</span>
-                                        </div>
-                                    ))}
+                {/* Expenditure Monitoring */}
+                <ECICard delay={0.3}>
+                    <ECISectionHeader title="Expenditure Monitor" icon="account_balance"
+                        action={<span className="text-[8px] font-mono text-fuchsia-400">{expenditureAlerts.filter(e => e.flag).length} flagged</span>} />
+                    <div className="p-4 space-y-3">
+                        {expenditureAlerts.map((e, i) => (
+                            <motion.div key={e.candidate} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 + i * 0.06 }}
+                                className={`p-3 rounded-lg border transition-colors ${e.flag ? "bg-red-500/5 border-red-500/15" : "bg-white/[0.02] border-white/[0.05]"}`}>
+                                <div className="flex justify-between items-start mb-1.5">
+                                    <div>
+                                        <span className="text-[11px] text-white/80 font-medium">{e.candidate}</span>
+                                        <p className="text-[9px] text-white/30 font-mono">{e.constituency}</p>
+                                    </div>
+                                    {e.flag && <span className="text-[7px] font-mono bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded animate-pulse">⚠ NEARING LIMIT</span>}
                                 </div>
-                            </div>
-                        </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1"><Bar pct={(e.spent / e.limit) * 100} color={e.spent / e.limit > 0.85 ? "#f87171" : e.spent / e.limit > 0.6 ? "#fbbf24" : "#4ade80"} h={4} /></div>
+                                    <span className="text-[9px] font-mono text-white/50">₹{e.spent}L / {e.limit}L</span>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </ECICard>
+            </div>
 
-                        {/* Phase Status */}
-                        <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                            <div className="bg-[#161b28] px-4 py-3 border-b border-[rgba(255,255,255,0.05)]">
-                                <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#c9a84c] flex items-center gap-2">
-                                    <Icon name="event_note" size={12} /> Election Phase Status
-                                </h3>
-                            </div>
-                            <div className="p-4 space-y-3">
-                                {[
-                                    { phase: "Phase I", date: "Feb 10", states: "UP·WB·GJ", status: "COMPLETED", pct: 100 },
-                                    { phase: "Phase II", date: "Feb 15", states: "MH·TN·KA", status: "COMPLETED", pct: 100 },
-                                    { phase: "Phase III", date: "Feb 20", states: "RJ·MP·BR", status: "IN PROGRESS", pct: 65 },
-                                    { phase: "Phase IV", date: "Feb 25", states: "AP·KL·OR", status: "SCHEDULED", pct: 0 },
-                                    { phase: "Phase V", date: "Mar 1", states: "AS·JH·HP", status: "SCHEDULED", pct: 0 },
-                                ].map(p => (
-                                    <div key={p.phase} className="flex items-center gap-3">
-                                        <div className={`w-2 h-2 rounded-full ${p.status === "COMPLETED" ? "bg-[#4ade80]" : p.status === "IN PROGRESS" ? "bg-[#c9a84c] animate-pulse" : "bg-[#f0ece3]/10"}`} />
-                                        <span className="font-mono text-[10px] text-[#c9a84c] w-14">{p.phase}</span>
-                                        <span className="font-mono text-[9px] text-[#f0ece3]/30 w-12">{p.date}</span>
-                                        <span className="text-[10px] text-[#f0ece3]/40 w-20">{p.states}</span>
-                                        <div className="flex-1">
-                                            <Bar pct={p.pct} color={p.status === "COMPLETED" ? "#4ade80" : p.status === "IN PROGRESS" ? "#c9a84c" : "#f0ece3"} h={3} />
-                                        </div>
-                                        <span className={`font-mono text-[8px] tracking-[0.5px] w-16 text-right ${p.status === "COMPLETED" ? "text-[#4ade80]" : p.status === "IN PROGRESS" ? "text-[#c9a84c]" : "text-[#f0ece3]/20"}`}>
-                                            {p.status}
-                                        </span>
-                                    </div>
+            {/* ── ROW 3: State Table + Observer Diary ── */}
+            <div className="grid grid-cols-[1.5fr_1fr] gap-5">
+                {/* State Alert Table */}
+                <ECICard delay={0.25}>
+                    <ECISectionHeader title="State-wise Status" icon="map"
+                        action={<button className="text-[8px] font-mono px-2.5 py-1 rounded-md bg-white/5 text-white/40 hover:text-white/60 border border-white/10 transition-all">EXPORT →</button>} />
+                    <div>
+                        <div className="grid grid-cols-[1fr_65px_70px_55px_120px_80px] gap-2 px-5 py-2.5 border-b border-white/[0.04] text-[8px] font-mono text-white/20 uppercase tracking-[1.5px]">
+                            <span>State</span><span>Booths</span><span>Violations</span><span>EVM</span><span>Turnout</span><span>Status</span>
+                        </div>
+                        {stateAlerts.map((s, i) => (
+                            <motion.div key={s.state}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.35 + i * 0.04 }}
+                                className="grid grid-cols-[1fr_65px_70px_55px_120px_80px] gap-2 px-5 py-3 border-b border-white/[0.03] hover:bg-white/[0.015] transition-colors cursor-pointer items-center"
+                            >
+                                <span className="text-[11px] text-white/80 font-medium">{s.state}</span>
+                                <span className="text-[10px] text-white/45 font-mono">{s.booths.toLocaleString()}</span>
+                                <span className="text-[10px] font-mono" style={{ color: s.violations > 20 ? "#f87171" : "#4ade80" }}>{s.violations}</span>
+                                <span className="text-[10px] font-mono" style={{ color: s.evmIssues > 0 ? "#f87171" : "#4ade80" }}>{s.evmIssues}</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1"><Bar pct={s.turnout} color={s.turnout > 60 ? "#4ade80" : "#fbbf24"} h={4} /></div>
+                                    <span className="text-[9px] text-white/45 font-mono w-7">{s.turnout}%</span>
+                                </div>
+                                <span className="text-[7px] font-mono px-1.5 py-0.5 rounded text-center" style={{ color: statusColor[s.status], background: statusColor[s.status] + "12" }}>{s.status}</span>
+                            </motion.div>
+                        ))}
+                    </div>
+                </ECICard>
+
+                {/* Observer Diary */}
+                <ECICard delay={0.3}>
+                    <ECISectionHeader title="Observer Diary" icon="edit_note"
+                        action={<span className="text-[8px] font-mono text-white/25">{diaryEntries.length} entries today</span>} />
+                    <div className="p-4">
+                        {/* Quick Add */}
+                        <div className="flex gap-2 mb-4">
+                            <input value={diaryEntry} onChange={e => setDiaryEntry(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && addDiaryEntry()}
+                                placeholder="Quick diary entry..."
+                                className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] text-white/80 placeholder-white/20 focus:border-red-500/30 focus:outline-none transition-colors"
+                            />
+                            <button onClick={addDiaryEntry}
+                                className="px-3 py-2 rounded-lg bg-red-500/12 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all text-[10px] font-mono shrink-0">
+                                <Icon name="add" size={16} />
+                            </button>
+                        </div>
+                        {/* Entries */}
+                        <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+                            <AnimatePresence>
+                                {diaryEntries.map((e, i) => (
+                                    <motion.div key={i + e.time}
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="relative pl-5 pb-2.5 border-l-2 border-white/[0.06]"
+                                    >
+                                        <div className="absolute left-[-4px] top-1 w-2 h-2 rounded-full bg-red-400/60 border border-red-400/30" />
+                                        <p className="text-[9px] font-mono text-red-400/50 mb-0.5">{e.time}</p>
+                                        <p className="text-[11px] text-white/60 leading-relaxed">{e.text}</p>
+                                    </motion.div>
                                 ))}
-                            </div>
+                            </AnimatePresence>
                         </div>
                     </div>
-                </div>
-            </main>
-        </div>
+                </ECICard>
+            </div>
+        </ECIPageLayout>
     );
 }
