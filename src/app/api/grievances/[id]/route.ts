@@ -3,9 +3,10 @@ import { updateGrievanceStatus } from "@/lib/services/grievances";
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await context.params;
         const body = await request.json();
         const { status, assigned_to, resolution_note } = body;
 
@@ -13,7 +14,7 @@ export async function PATCH(
             return NextResponse.json({ error: "status is required" }, { status: 400 });
         }
 
-        const grievance = await updateGrievanceStatus(Number(params.id), {
+        const grievance = await updateGrievanceStatus(Number(id), {
             status,
             assigned_to,
             resolution_note,

@@ -1,0 +1,74 @@
+flowchart TD
+    %% Styling
+    classDef frontend fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    classDef backend fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff
+    classDef database fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff
+    classDef external fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff
+
+    %% User Groups
+    subgraph Users ["User Personas"]
+        C[Citizens / Voters]
+        O[Officials / Admins]
+        W[Ground Workers]
+    end
+
+    %% Frontend App (Client)
+    subgraph Frontend ["Frontend (Next.js 16 App Router)"]
+        direction BT
+        LP[Landing & Marketing Page]:::frontend
+        
+        CP[Citizen Portal]:::frontend
+        DB[Dashboards]:::frontend
+        
+        MW(Middleware):::frontend
+        
+        CP --> MW
+        DB --> MW
+    end
+    
+    %% API Layer
+    subgraph API ["Backend (Next.js 16 API)"]
+        direction TB
+        AR[API Routes]:::backend
+        
+        SV[Services / Business Logic]:::backend
+        
+        AR --> SV
+    end
+    
+    %% Database and Auth 
+    subgraph DataLayer ["Data & Auth (Supabase)"]
+        direction TB
+        AUTH[Supabase Auth JWT]:::database
+        DB_PG[(PostgreSQL DB)]:::database
+        RLS{Row Level Security}:::database
+        STORAGE(Proof Images):::database
+        
+        AUTH --> RLS
+        DB_PG --> RLS
+    end
+    
+    %% External Integrations
+    subgraph External ["External Services"]
+        MY[MyScheme Govt API]:::external
+        AI[Sarvam AI Engine]:::external
+        SMS[SMS Gateway]:::external
+    end
+
+    %% Connections
+    C --> LP
+    C -.-> CP
+    O -.-> DB
+    W -.-> DB
+    
+    LP --> AR
+    CP --> AR
+    DB --> AR
+    
+    SV --> AUTH
+    SV --> DB_PG
+    SV --> STORAGE
+    
+    SV --> MY
+    SV --> AI
+    SV --> SMS

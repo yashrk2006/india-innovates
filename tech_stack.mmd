@@ -1,0 +1,57 @@
+flowchart LR
+    %% Core Nodes
+    subgraph Core ["Core Environment"]
+        TS[TypeScript] 
+        NEXT[Next.js 16 App Router]
+        REACT[React 19]
+    end
+
+    %% Frontend Layer
+    subgraph Frontend ["Frontend & UI"]
+        TW[Tailwind CSS v4]
+        FM[Framer Motion]
+        RE[Recharts]
+        RF[React Flow]
+        IC[Material Icons & SVG]
+    end
+
+    %% State & Data Fetching
+    subgraph State ["State Management"]
+        ZU[Zustand]
+        TQ[TanStack Query]
+        HM[Custom Hooks & Context]
+    end
+
+    %% Forms & Schema
+    subgraph Forms ["Forms & Validation"]
+        RHF[React Hook Form]
+        ZOD[Zod Validation]
+    end
+
+    %% Backend & Database Layer
+    subgraph Backend ["Backend & DB"]
+        SUP[Supabase SDK]
+        PG[(PostgreSQL)]
+        SA[Supabase Auth JWT]
+        RLS[Row Level Security]
+    end
+
+    %% Hosting & DevOps
+    subgraph DevOps ["Hosting & DevOps"]
+        VER[Vercel Edge & Serverless]
+        GIT[GitHub Actions / Git]
+    end
+
+    %% External
+    subgraph AI ["AI Features"]
+        SARV[Sarvam AI]
+    end
+
+    %% Connections linking areas
+    Core --> Frontend
+    Core --> Backend
+    Frontend --> State
+    Frontend --> Forms
+    Backend --> DevOps
+    State -.-> Backend
+    Backend -.-> AI

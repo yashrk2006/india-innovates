@@ -3,9 +3,10 @@ import { updateTaskStatus } from "@/lib/services/workers";
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await context.params;
         const body = await request.json();
         const { status } = body;
 
@@ -13,7 +14,7 @@ export async function PATCH(
             return NextResponse.json({ error: "status is required" }, { status: 400 });
         }
 
-        const task = await updateTaskStatus(Number(params.id), status);
+        const task = await updateTaskStatus(Number(id), status);
         if (!task) {
             return NextResponse.json({ error: "Failed to update task" }, { status: 400 });
         }
