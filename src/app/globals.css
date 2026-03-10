@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+@theme {
+  --color-navy: #080d1a;
+  --color-navy2: #0d1528;
+  --color-navy3: #111e35;
+  --color-gold: #c9a84c;
+  --color-gold2: #e8c56a;
+  --color-gold-dim: rgba(201, 168, 76, 0.15);
+  --color-white: #f0ece3;
+  --color-white2: rgba(240, 236, 227, 0.7);
+  --color-white3: rgba(240, 236, 227, 0.25);
+  --color-white4: rgba(240, 236, 227, 0.08);
+  --color-red: #d64045;
+  --color-green: #2a9d62;
+  --color-blue: #2563c4;
+  --color-amber: #d97706;
+  --color-border-custom: rgba(201, 168, 76, 0.18);
+  --color-saffron: #e8761a;
+  --color-background-dark: #0a0a0f;
+  --color-cream: #f0ece3;
+  --color-primary: #c9a74a;
+
+  --font-display: "Playfair Display", serif;
+  --font-body: "Public Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
 :root {
   --navy: #080d1a;
   --navy2: #0d1528;
