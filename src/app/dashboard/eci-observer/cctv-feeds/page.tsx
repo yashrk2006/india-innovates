@@ -37,10 +37,10 @@ const cvigilFromCCTV = [
     { id: "CVG-4420", from: "BTH-002", desc: "Unauthorized vehicle — Flying Squad dispatched", status: "RESOLVED", time: "5:12 PM" },
 ];
 
-const statusColor: Record<string, string> = { LIVE: "#4ade80", ALERT: "#f87171", OFFLINE: "#6b7280" };
-const actColor: Record<string, string> = { Normal: "#4ade80", "High Traffic": "#fbbf24", Suspicious: "#f87171", "No Feed": "#6b7280", Queue: "#60a5fa", Crowd: "#f87171" };
-const sevColor: Record<string, string> = { CRITICAL: "#f87171", HIGH: "#fbbf24", MEDIUM: "#60a5fa" };
-const cvigilColor: Record<string, string> = { PENDING: "#f87171", ASSIGNED: "#fbbf24", RESOLVED: "#4ade80" };
+const statusColor: Record<string, string> = { LIVE: "#10b981", ALERT: "#ef4444", OFFLINE: "#6b7280" };
+const actColor: Record<string, string> = { Normal: "#10b981", "High Traffic": "#f59e0b", Suspicious: "#ef4444", "No Feed": "#6b7280", Queue: "#60a5fa", Crowd: "#ef4444" };
+const sevColor: Record<string, string> = { CRITICAL: "#ef4444", HIGH: "#f59e0b", MEDIUM: "#60a5fa" };
+const cvigilColor: Record<string, string> = { PENDING: "#ef4444", ASSIGNED: "#f59e0b", RESOLVED: "#10b981" };
 
 export default function CCTVFeedsPage() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -51,25 +51,25 @@ export default function CCTVFeedsPage() {
     const filtered = filter === "ALL" ? feeds : feeds.filter(f => f.status === filter);
 
     return (
-        <ECIPageLayout title="CCTV Surveillance Grid" badge="📹 9 CAMERAS" badgeColor="#4ade80"
+        <ECIPageLayout title="CCTV Surveillance Grid" badge="📹 9 CAMERAS" badgeColor="#10b981"
             actions={
                 <div className="flex items-center gap-3">
                     <button onClick={() => setShowAI(!showAI)}
-                        className={`text-[9px] font-mono px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${showAI ? "bg-purple-500/15 text-purple-400 border border-purple-500/25" : "text-white/30 border border-white/[0.06]"}`}
+                        className={`text-[9px] font-mono px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${showAI ? "bg-purple-500/15 text-purple-400 border border-purple-500/25" : "text-slate-500 border border-slate-200"}`}
                     >
                         <Icon name="smart_toy" size={14} /> AI Detection {showAI ? "ON" : "OFF"}
                     </button>
                     <div className="flex items-center gap-1">
-                        <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded ${viewMode === "grid" ? "bg-red-500/15 text-red-400" : "text-white/30"} transition-colors`}><Icon name="grid_view" size={16} /></button>
-                        <button onClick={() => setViewMode("list")} className={`p-1.5 rounded ${viewMode === "list" ? "bg-red-500/15 text-red-400" : "text-white/30"} transition-colors`}><Icon name="view_list" size={16} /></button>
+                        <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded ${viewMode === "grid" ? "bg-red-500/15 text-red-400" : "text-slate-500"} transition-colors`}><Icon name="grid_view" size={16} /></button>
+                        <button onClick={() => setViewMode("list")} className={`p-1.5 rounded ${viewMode === "list" ? "bg-red-500/15 text-red-400" : "text-slate-500"} transition-colors`}><Icon name="view_list" size={16} /></button>
                     </div>
                 </div>
             }
         >
             <div className="grid grid-cols-5 gap-3 mb-6">
                 <ECIKPI icon="videocam" label="Total Cameras" value="9" sub="3 constituencies" color="#60a5fa" delay={0} />
-                <ECIKPI icon="check_circle" label="Online" value="7" sub="77.8% uptime" color="#4ade80" delay={0.06} />
-                <ECIKPI icon="warning" label="Alert Feeds" value="2" sub="Needs review" color="#f87171" delay={0.12} />
+                <ECIKPI icon="check_circle" label="Online" value="7" sub="77.8% uptime" color="#10b981" delay={0.06} />
+                <ECIKPI icon="warning" label="Alert Feeds" value="2" sub="Needs review" color="#ef4444" delay={0.12} />
                 <ECIKPI icon="smart_toy" label="AI Detections" value={String(aiDetections.length)} sub="4 critical today" color="#818cf8" delay={0.18} />
                 <ECIKPI icon="phone_in_talk" label="cVIGIL Auto" value="3" sub="From AI pipeline" color="#f472b6" delay={0.24} />
             </div>
@@ -78,7 +78,7 @@ export default function CCTVFeedsPage() {
             <div className="flex gap-2 mb-5">
                 {["ALL", "LIVE", "ALERT", "OFFLINE"].map(f => (
                     <button key={f} onClick={() => setFilter(f)}
-                        className={`text-[10px] font-mono px-3 py-1.5 rounded-lg transition-all ${filter === f ? "bg-red-500/15 text-red-400 border border-red-500/25" : "text-white/30 hover:text-white/60 border border-white/[0.06]"}`}
+                        className={`text-[10px] font-mono px-3 py-1.5 rounded-lg transition-all ${filter === f ? "bg-red-500/15 text-red-400 border border-red-500/25" : "text-slate-500 hover:text-slate-600 border border-slate-200"}`}
                     >{f} {f !== "ALL" && `(${feeds.filter(x => x.status === f).length})`}</button>
                 ))}
             </div>
@@ -93,14 +93,14 @@ export default function CCTVFeedsPage() {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.04 }}
                             onClick={() => setSelectedFeed(selectedFeed === feed.id ? null : feed.id)}
-                            className={`bg-[#0d1018] rounded-xl border overflow-hidden group cursor-pointer transition-all duration-300 ${selectedFeed === feed.id ? "ring-1 ring-red-500/30" : ""} ${feed.status === "ALERT" ? "border-red-500/25 hover:border-red-500/40" : feed.status === "OFFLINE" ? "border-white/5 opacity-60" : "border-white/[0.06] hover:border-white/[0.12]"}`}
+                            className={`bg-[#0d1018] rounded-xl border overflow-hidden group cursor-pointer transition-all duration-300 ${selectedFeed === feed.id ? "ring-1 ring-red-500/30" : ""} ${feed.status === "ALERT" ? "border-red-500/25 hover:border-red-500/40" : feed.status === "OFFLINE" ? "border-white/5 opacity-60" : "border-slate-200 hover:border-white/[0.12]"}`}
                         >
                             {/* Video */}
                             <div className="relative aspect-video bg-[#0a0c16] overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
                                     {feed.status !== "OFFLINE" && (
                                         <>
-                                            <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.015)_2px,rgba(255,255,255,0.015)_4px)]" />
+                                            <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(30,41,59,0.1)_2px,rgba(30,41,59,0.1)_4px)]" />
                                             <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
                                             {/* AI detection overlay */}
                                             {showAI && feed.aiAlerts > 0 && (
@@ -117,33 +117,33 @@ export default function CCTVFeedsPage() {
                                     )}
                                     {feed.status === "OFFLINE" && (
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="text-center"><Icon name="videocam_off" size={28} className="text-white/15" /><p className="text-[9px] text-white/15 mt-1 font-mono">NO SIGNAL</p></div>
+                                            <div className="text-center"><Icon name="videocam_off" size={28} className="text-slate-500" /><p className="text-[9px] text-slate-500 mt-1 font-mono">NO SIGNAL</p></div>
                                         </div>
                                     )}
                                 </div>
                                 {/* HUD */}
                                 <div className="absolute top-2 left-2 flex items-center gap-1.5">
                                     <div className={`w-2 h-2 rounded-full ${feed.status === "LIVE" ? "bg-green-500 animate-pulse" : feed.status === "ALERT" ? "bg-red-500 animate-pulse" : "bg-gray-500"}`} />
-                                    <span className="text-[8px] font-mono text-white/80 bg-black/50 px-1.5 py-0.5 rounded">{feed.status}</span>
+                                    <span className="text-[8px] font-mono text-slate-700 bg-black/50 px-1.5 py-0.5 rounded">{feed.status}</span>
                                 </div>
                                 <div className="absolute top-2 right-2 flex items-center gap-1">
-                                    <span className="text-[7px] font-mono text-white/50 bg-black/50 px-1.5 py-0.5 rounded">{feed.quality}</span>
+                                    <span className="text-[7px] font-mono text-slate-500 bg-black/50 px-1.5 py-0.5 rounded">{feed.quality}</span>
                                     {showAI && <span className="text-[7px] font-mono bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded">AI</span>}
                                 </div>
                                 <div className="absolute bottom-2 left-2 right-2 flex justify-between items-end">
-                                    <span className="text-[8px] font-mono text-white/70 bg-black/50 px-1.5 py-0.5 rounded">{feed.id}</span>
-                                    {feed.voters > 0 && <span className="text-[8px] font-mono text-white/50 bg-black/50 px-1.5 py-0.5 rounded">👤 {feed.voters}</span>}
+                                    <span className="text-[8px] font-mono text-slate-600 bg-black/50 px-1.5 py-0.5 rounded">{feed.id}</span>
+                                    {feed.voters > 0 && <span className="text-[8px] font-mono text-slate-500 bg-black/50 px-1.5 py-0.5 rounded">👤 {feed.voters}</span>}
                                 </div>
                             </div>
                             {/* Info */}
                             <div className="px-3 py-2.5">
-                                <p className="text-[11px] text-white/80 font-medium mb-1 truncate">{feed.location}</p>
+                                <p className="text-[11px] text-slate-700 font-medium mb-1 truncate">{feed.location}</p>
                                 <div className="flex items-center justify-between">
                                     <span className="text-[9px] font-mono" style={{ color: actColor[feed.activity] }}>{feed.activity}</span>
                                     <div className="flex gap-0.5">
-                                        <button className="p-1 rounded hover:bg-white/5 text-white/20 hover:text-white/60 transition-colors"><Icon name="fullscreen" size={13} /></button>
-                                        <button className="p-1 rounded hover:bg-white/5 text-white/20 hover:text-white/60 transition-colors"><Icon name="photo_camera" size={13} /></button>
-                                        <button className="p-1 rounded hover:bg-red-500/10 text-white/20 hover:text-red-400 transition-colors"><Icon name="flag" size={13} /></button>
+                                        <button className="p-1 rounded hover:bg-white/5 text-slate-400 hover:text-slate-600 transition-colors"><Icon name="fullscreen" size={13} /></button>
+                                        <button className="p-1 rounded hover:bg-white/5 text-slate-400 hover:text-slate-600 transition-colors"><Icon name="photo_camera" size={13} /></button>
+                                        <button className="p-1 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors"><Icon name="flag" size={13} /></button>
                                     </div>
                                 </div>
                             </div>
@@ -164,17 +164,17 @@ export default function CCTVFeedsPage() {
                                     <div className="flex justify-between items-start mb-1">
                                         <span className="text-[8px] font-mono px-1.5 py-0.5 rounded" style={{ color: sevColor[d.severity], background: sevColor[d.severity] + "12" }}>{d.severity}</span>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[7px] font-mono text-white/20 bg-white/5 px-1 py-0.5 rounded">{d.camera}</span>
-                                            <span className="text-[7px] font-mono text-white/15">{d.time}</span>
+                                            <span className="text-[7px] font-mono text-slate-400 bg-white/5 px-1 py-0.5 rounded">{d.camera}</span>
+                                            <span className="text-[7px] font-mono text-slate-500">{d.time}</span>
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-white/70 font-medium mb-0.5">{d.type}</p>
-                                    <p className="text-[9px] text-white/40 leading-relaxed">{d.desc}</p>
+                                    <p className="text-[10px] text-slate-600 font-medium mb-0.5">{d.type}</p>
+                                    <p className="text-[9px] text-slate-500 leading-relaxed">{d.desc}</p>
                                     <div className="flex items-center gap-1.5 mt-1.5">
                                         <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                                            <div className="h-full rounded-full" style={{ width: `${d.confidence}%`, background: d.confidence > 90 ? "#4ade80" : d.confidence > 80 ? "#fbbf24" : "#f87171" }} />
+                                            <div className="h-full rounded-full" style={{ width: `${d.confidence}%`, background: d.confidence > 90 ? "#10b981" : d.confidence > 80 ? "#f59e0b" : "#ef4444" }} />
                                         </div>
-                                        <span className="text-[7px] font-mono text-white/30">{d.confidence}% conf.</span>
+                                        <span className="text-[7px] font-mono text-slate-500">{d.confidence}% conf.</span>
                                     </div>
                                 </motion.div>
                             ))}
@@ -188,12 +188,12 @@ export default function CCTVFeedsPage() {
                         <div className="p-4 space-y-2.5">
                             {cvigilFromCCTV.map((c, i) => (
                                 <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.06 }}
-                                    className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+                                    className="p-3 rounded-lg bg-white/[0.02] border border-slate-200">
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className="text-[10px] text-white/75 font-medium">{c.desc}</span>
+                                        <span className="text-[10px] text-slate-700 font-medium">{c.desc}</span>
                                         <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: cvigilColor[c.status], background: cvigilColor[c.status] + "12" }}>{c.status}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[8px] font-mono text-white/25">
+                                    <div className="flex items-center gap-2 text-[8px] font-mono text-slate-400">
                                         <span>{c.id}</span>
                                         <span>📹 {c.from}</span>
                                         <span>🕐 {c.time}</span>
@@ -209,12 +209,12 @@ export default function CCTVFeedsPage() {
                         <div className="p-4 space-y-2">
                             {[
                                 { label: "Request Playback", icon: "replay", color: "#60a5fa" },
-                                { label: "Export Snapshots", icon: "download", color: "#4ade80" },
-                                { label: "File cVIGIL Report", icon: "report", color: "#f87171" },
-                                { label: "Request Replacement Camera", icon: "swap_horiz", color: "#fbbf24" },
+                                { label: "Export Snapshots", icon: "download", color: "#10b981" },
+                                { label: "File cVIGIL Report", icon: "report", color: "#ef4444" },
+                                { label: "Request Replacement Camera", icon: "swap_horiz", color: "#f59e0b" },
                             ].map((a, i) => (
                                 <motion.button key={a.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 + i * 0.05 }}
-                                    className="w-full flex items-center gap-2.5 p-3 rounded-lg text-[10px] font-medium text-white/50 bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:text-white/80 transition-all text-left"
+                                    className="w-full flex items-center gap-2.5 p-3 rounded-lg text-[10px] font-medium text-slate-500 bg-white/[0.02] border border-slate-200 hover:bg-white/[0.05] hover:text-slate-700 transition-all text-left"
                                 >
                                     <Icon name={a.icon} size={15} style={{ color: a.color }} />
                                     {a.label}

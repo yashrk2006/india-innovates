@@ -20,11 +20,11 @@ const schemes = [
     { name: "Atal Pension Yojana", abbr: "APY", eligible: 6000, enrolled: 3000, gap: 3000, gapPct: 50, wards: ["Ward 14", "Ward 16", "Ward 19"], targetDate: "Mar 8", priority: "HIGH", amount: "₹5K/mo pension" },
 ];
 
-const priColor: Record<string, string> = { CRITICAL: "#f87171", HIGH: "#fbbf24", MEDIUM: "#60a5fa", LOW: "#4ade80" };
+const priColor: Record<string, string> = { CRITICAL: "#ef4444", HIGH: "#f59e0b", MEDIUM: "#60a5fa", LOW: "#10b981" };
 
 export default function SchemeGapsPage() {
     const [sortBy, setSortBy] = useState<"gap" | "priority">("gap");
-    const sorted = [...schemes].sort((a, b) => sortBy === "gap" ? b.gapPct - a.gapPct : (priColor[a.priority] === "#f87171" ? -1 : 1));
+    const sorted = [...schemes].sort((a, b) => sortBy === "gap" ? b.gapPct - a.gapPct : (priColor[a.priority] === "#ef4444" ? -1 : 1));
     const totalGap = schemes.reduce((s, sc) => s + sc.gap, 0);
 
     // ── Live data from backend ──
@@ -48,14 +48,14 @@ export default function SchemeGapsPage() {
         <ManagerPageLayout title="Scheme Gap Analysis" badge="🔍 AI INSIGHTS" badgeColor="#818cf8">
             <div className="grid grid-cols-5 gap-3">
                 <MgrKPI icon="policy" label="Schemes Tracked" value={schemeGaps.length > 0 ? String(schemeGaps.length) : String(schemes.length)} sub="Central + State" color="#818cf8" delay={0} />
-                <MgrKPI icon="person_off" label="Total Gap" value={totalGap.toLocaleString()} sub="Eligible unenrolled" color="#f87171" delay={0.05} />
-                <MgrKPI icon="warning" label="Critical Gaps" value={String(schemes.filter(s => s.priority === "CRITICAL").length)} sub="Need urgent push" color="#f87171" delay={0.1} />
-                <MgrKPI icon="location_on" label="Worst Ward" value="Ward 19" sub="Most underserved" color="#fbbf24" delay={0.15} />
-                <MgrKPI icon="trending_up" label="Enrolled Today" value={stats?.totalSchemeEnrollments?.toString() || "156"} sub="↑ 23% vs yesterday" color="#4ade80" delay={0.2} />
+                <MgrKPI icon="person_off" label="Total Gap" value={totalGap.toLocaleString()} sub="Eligible unenrolled" color="#ef4444" delay={0.05} />
+                <MgrKPI icon="warning" label="Critical Gaps" value={String(schemes.filter(s => s.priority === "CRITICAL").length)} sub="Need urgent push" color="#ef4444" delay={0.1} />
+                <MgrKPI icon="location_on" label="Worst Ward" value="Ward 19" sub="Most underserved" color="#f59e0b" delay={0.15} />
+                <MgrKPI icon="trending_up" label="Enrolled Today" value={stats?.totalSchemeEnrollments?.toString() || "156"} sub="↑ 23% vs yesterday" color="#10b981" delay={0.2} />
             </div>
 
             <div className="flex justify-end">
-                <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="bg-white/5 border border-white/[0.06] rounded px-3 py-1.5 text-[9px] font-mono text-white/40 outline-none">
+                <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 text-[9px] font-mono text-slate-500 outline-none">
                     <option value="gap">Sort by Gap %</option><option value="priority">Sort by Priority</option>
                 </select>
             </div>
@@ -68,32 +68,32 @@ export default function SchemeGapsPage() {
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
                                         <div className="flex items-center gap-2 mb-0.5">
-                                            <h4 className="text-[13px] text-white/85 font-semibold">{sc.name}</h4>
-                                            <span className="text-[8px] font-mono text-white/20 bg-white/5 px-1.5 py-0.5 rounded">{sc.abbr}</span>
+                                            <h4 className="text-[13px] text-slate-500 font-semibold">{sc.name}</h4>
+                                            <span className="text-[8px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{sc.abbr}</span>
                                             <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: priColor[sc.priority], background: priColor[sc.priority] + "12" }}>{sc.priority}</span>
                                         </div>
-                                        <div className="flex gap-3 text-[9px] text-white/30 mt-0.5">
+                                        <div className="flex gap-3 text-[9px] text-slate-500 mt-0.5">
                                             <span>💰 {sc.amount}</span><span>📅 Target: {sc.targetDate}</span>
                                             <span>📍 {sc.wards.join(", ")}</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[24px] font-bold" style={{ color: sc.gapPct > 40 ? "#f87171" : sc.gapPct > 20 ? "#fbbf24" : "#4ade80" }}>{sc.gapPct}%</span>
-                                        <p className="text-[8px] font-mono text-white/20">gap</p>
+                                        <span className="text-[24px] font-bold" style={{ color: sc.gapPct > 40 ? "#ef4444" : sc.gapPct > 20 ? "#f59e0b" : "#10b981" }}>{sc.gapPct}%</span>
+                                        <p className="text-[8px] font-mono text-slate-400">gap</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 mb-2">
-                                    <div className="flex-1"><MgrBar pct={100 - sc.gapPct} color={sc.gapPct > 40 ? "#f87171" : sc.gapPct > 20 ? "#fbbf24" : "#4ade80"} h={6} /></div>
+                                    <div className="flex-1"><MgrBar pct={100 - sc.gapPct} color={sc.gapPct > 40 ? "#ef4444" : sc.gapPct > 20 ? "#f59e0b" : "#10b981"} h={6} /></div>
                                 </div>
                                 <div className="flex justify-between text-[9px] font-mono">
                                     <span className="text-green-400">Enrolled: {sc.enrolled.toLocaleString()}</span>
-                                    <span className="text-white/20">Eligible: {sc.eligible.toLocaleString()}</span>
+                                    <span className="text-slate-400">Eligible: {sc.eligible.toLocaleString()}</span>
                                     <span className="text-red-400">Gap: {sc.gap.toLocaleString()}</span>
                                 </div>
-                                <div className="flex gap-2 mt-3 pt-3 border-t border-white/[0.04]">
-                                    <button onClick={() => handleAssignWorkers(sc.name)} className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-[#c9a84c]/12 text-[#c9a84c] border border-[#c9a84c]/25 hover:bg-[#c9a84c]/20 transition-all">ASSIGN WORKERS</button>
-                                    <button onClick={() => toast(`Ward map for ${sc.wards.join(", ")} — opening...`, "info")} className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 transition-all">VIEW WARD MAP</button>
-                                    <button onClick={() => toast(`Downloading ${sc.gap.toLocaleString()} unenrolled voters list...`, "info")} className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 transition-all">DOWNLOAD LIST</button>
+                                <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200">
+                                    <button onClick={() => handleAssignWorkers(sc.name)} className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-[#1e293b]/12 text-[#1e293b] border border-[#1e293b]/25 hover:bg-[#1e293b]/20 transition-all">ASSIGN WORKERS</button>
+                                    <button onClick={() => toast(`Ward map for ${sc.wards.join(", ")} — opening...`, "info")} className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all">VIEW WARD MAP</button>
+                                    <button onClick={() => toast(`Downloading ${sc.gap.toLocaleString()} unenrolled voters list...`, "info")} className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all">DOWNLOAD LIST</button>
                                 </div>
                             </div>
                         </MgrCard>

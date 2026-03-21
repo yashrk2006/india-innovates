@@ -7,7 +7,7 @@ function Icon({ name, size = 16, className = "", style }: { name: string; size?:
     return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size, ...style }}>{name}</span>;
 }
 
-function Bar({ pct, color = "#f87171", h = 5 }: { pct: number; color?: string; h?: number }) {
+function Bar({ pct, color = "#ef4444", h = 5 }: { pct: number; color?: string; h?: number }) {
     return (
         <div className="bg-white/5 rounded-full overflow-hidden" style={{ height: h }}>
             <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1 }}
@@ -41,9 +41,9 @@ const recentEvents = [
 
 const evmStatus = [
     { label: "Total EVMs Deployed", value: "18,420", icon: "ballot", color: "#60a5fa" },
-    { label: "Functioning Normal", value: "18,391", icon: "check_circle", color: "#4ade80" },
-    { label: "Replaced Today", value: "24", icon: "swap_horiz", color: "#fbbf24" },
-    { label: "Under Investigation", value: "5", icon: "search", color: "#f87171" },
+    { label: "Functioning Normal", value: "18,391", icon: "check_circle", color: "#10b981" },
+    { label: "Replaced Today", value: "24", icon: "swap_horiz", color: "#f59e0b" },
+    { label: "Under Investigation", value: "5", icon: "search", color: "#ef4444" },
 ];
 
 const vvpatStatus = { total: 18420, verified: 18398, mismatch: 3, pending: 19 };
@@ -58,8 +58,8 @@ const cvigilComplaints = [
 
 const observerDeployment = [
     { role: "General Observer", deployed: 312, total: 320, color: "#60a5fa" },
-    { role: "Expenditure Observer", deployed: 156, total: 160, color: "#fbbf24" },
-    { role: "Police Observer", deployed: 155, total: 160, color: "#f87171" },
+    { role: "Expenditure Observer", deployed: 156, total: 160, color: "#f59e0b" },
+    { role: "Police Observer", deployed: 155, total: 160, color: "#ef4444" },
     { role: "Micro Observer", deployed: 189, total: 200, color: "#818cf8" },
 ];
 
@@ -77,9 +77,9 @@ const expenditureAlerts = [
     { candidate: "Dr. Anita Das", constituency: "Gorakhpur", spent: 35.6, limit: 75, flag: false },
 ];
 
-const levelColor: Record<string, string> = { CRITICAL: "#f87171", HIGH: "#fbbf24", MEDIUM: "#60a5fa", INFO: "#4ade80" };
-const statusColor: Record<string, string> = { "HIGH ALERT": "#f87171", CAUTION: "#fbbf24", NORMAL: "#4ade80" };
-const cvigilStatusColor: Record<string, string> = { PENDING: "#f87171", ASSIGNED: "#fbbf24", RESOLVED: "#4ade80", "FIR FILED": "#f87171" };
+const levelColor: Record<string, string> = { CRITICAL: "#ef4444", HIGH: "#f59e0b", MEDIUM: "#60a5fa", INFO: "#10b981" };
+const statusColor: Record<string, string> = { "HIGH ALERT": "#ef4444", CAUTION: "#f59e0b", NORMAL: "#10b981" };
+const cvigilStatusColor: Record<string, string> = { PENDING: "#ef4444", ASSIGNED: "#f59e0b", RESOLVED: "#10b981", "FIR FILED": "#ef4444" };
 
 export default function ECICommandCenter() {
     const [clock, setClock] = useState("");
@@ -107,12 +107,12 @@ export default function ECICommandCenter() {
     };
 
     return (
-        <ECIPageLayout title="National Command Center" badge="🟢 SYSTEM ONLINE" badgeColor="#4ade80"
+        <ECIPageLayout title="National Command Center" badge="🟢 SYSTEM ONLINE" badgeColor="#10b981"
             actions={
                 <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-mono text-white/35 tracking-widest">Phase 2 · General Election 2026</span>
+                    <span className="text-[10px] font-mono text-slate-500 tracking-widest">Phase 2 · General Election 2026</span>
                     <span className="text-[13px] font-mono text-red-400 font-bold tabular-nums">{clock} IST</span>
-                    <button className="text-[9px] font-mono px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all flex items-center gap-1.5 shadow-lg shadow-red-600/20">
+                    <button className="text-[9px] font-mono px-3 py-1.5 bg-red-600 text-slate-900 rounded-lg hover:bg-red-500 transition-all flex items-center gap-1.5 shadow-lg shadow-red-600/20">
                         <Icon name="emergency" size={14} /> EMERGENCY
                     </button>
                 </div>
@@ -120,11 +120,11 @@ export default function ECICommandCenter() {
         >
             {/* ── KPI Row ── */}
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
-                <ECIKPI icon="how_to_vote" label="National Turnout" value="62.9%" sub="↑ 3.1% vs Phase 1" color="#4ade80" delay={0} />
+                <ECIKPI icon="how_to_vote" label="National Turnout" value="62.9%" sub="↑ 3.1% vs Phase 1" color="#10b981" delay={0} />
                 <ECIKPI icon="location_on" label="Active Booths" value="4,570" sub="28 states" color="#60a5fa" delay={0.05} />
                 <ECIKPI icon="visibility" label="Observers" value="812" sub="97.1% deployed" color="#818cf8" delay={0.1} />
-                <ECIKPI icon="warning" label="Violations" value="106" sub="34 critical" color="#f87171" delay={0.15} />
-                <ECIKPI icon="ballot" label="EVM Issues" value="5" sub="99.97% healthy" color="#fbbf24" delay={0.2} />
+                <ECIKPI icon="warning" label="Violations" value="106" sub="34 critical" color="#ef4444" delay={0.15} />
+                <ECIKPI icon="ballot" label="EVM Issues" value="5" sub="99.97% healthy" color="#f59e0b" delay={0.2} />
                 <ECIKPI icon="phone_in_talk" label="cVIGIL" value="24" sub="5 pending" color="#f472b6" delay={0.25} />
             </div>
 
@@ -138,7 +138,7 @@ export default function ECICommandCenter() {
                                 <span className="text-[8px] font-mono text-red-400 animate-pulse mr-2">● LIVE</span>
                                 {["ALL", "EVM", "cVIGIL", "MCC", "Turnout"].map(f => (
                                     <button key={f} onClick={() => setEventFilter(f)}
-                                        className={`text-[8px] font-mono px-2 py-0.5 rounded transition-all ${eventFilter === f ? "bg-red-500/15 text-red-400" : "text-white/25 hover:text-white/50"}`}
+                                        className={`text-[8px] font-mono px-2 py-0.5 rounded transition-all ${eventFilter === f ? "bg-red-500/15 text-red-400" : "text-slate-400 hover:text-slate-500"}`}
                                     >{f}</button>
                                 ))}
                             </div>
@@ -158,11 +158,11 @@ export default function ECICommandCenter() {
                                         <Icon name={e.icon} size={14} style={{ color: levelColor[e.level] }} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] text-white/75 leading-relaxed group-hover:text-white/90 transition-colors">{e.event}</p>
+                                        <p className="text-[11px] text-slate-700 leading-relaxed group-hover:text-slate-500 transition-colors">{e.event}</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: levelColor[e.level], background: levelColor[e.level] + "12" }}>{e.level}</span>
-                                            <span className="text-[7px] font-mono text-white/20 bg-white/5 px-1.5 py-0.5 rounded">{e.category}</span>
-                                            <span className="text-[7px] font-mono text-white/15">{e.time}</span>
+                                            <span className="text-[7px] font-mono text-slate-400 bg-white/5 px-1.5 py-0.5 rounded">{e.category}</span>
+                                            <span className="text-[7px] font-mono text-slate-500">{e.time}</span>
                                         </div>
                                     </div>
                                     <button className="opacity-0 group-hover:opacity-100 text-[8px] font-mono text-red-400 px-2 py-1 rounded bg-red-500/10 transition-all shrink-0">ACTION</button>
@@ -179,12 +179,12 @@ export default function ECICommandCenter() {
                         <div className="p-4 grid grid-cols-2 gap-3">
                             {evmStatus.map((e, i) => (
                                 <motion.div key={e.label} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 + i * 0.06 }}
-                                    className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+                                    className="p-3 rounded-lg bg-white/[0.02] border border-slate-200">
                                     <div className="flex items-center gap-1.5 mb-1">
                                         <Icon name={e.icon} size={12} style={{ color: e.color }} />
-                                        <span className="text-[8px] font-mono text-white/30 uppercase tracking-wider">{e.label}</span>
+                                        <span className="text-[8px] font-mono text-slate-500 uppercase tracking-wider">{e.label}</span>
                                     </div>
-                                    <span className="text-[18px] font-bold text-white/90">{e.value}</span>
+                                    <span className="text-[18px] font-bold text-slate-500">{e.value}</span>
                                 </motion.div>
                             ))}
                         </div>
@@ -195,8 +195,8 @@ export default function ECICommandCenter() {
                                     <span className="text-[9px] font-mono text-green-400 tracking-wide">VVPAT VERIFICATION</span>
                                     <span className="text-[9px] font-mono text-green-400">{((vvpatStatus.verified / vvpatStatus.total) * 100).toFixed(1)}%</span>
                                 </div>
-                                <Bar pct={(vvpatStatus.verified / vvpatStatus.total) * 100} color="#4ade80" h={4} />
-                                <div className="flex justify-between text-[8px] font-mono text-white/25 mt-1.5">
+                                <Bar pct={(vvpatStatus.verified / vvpatStatus.total) * 100} color="#10b981" h={4} />
+                                <div className="flex justify-between text-[8px] font-mono text-slate-400 mt-1.5">
                                     <span>{vvpatStatus.verified.toLocaleString()} verified</span>
                                     <span className="text-red-400">{vvpatStatus.mismatch} mismatch</span>
                                     <span>{vvpatStatus.pending} pending</span>
@@ -212,9 +212,9 @@ export default function ECICommandCenter() {
                             {observerDeployment.map((o, i) => (
                                 <motion.div key={o.role} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 + i * 0.06 }}
                                     className="flex items-center gap-3">
-                                    <span className="text-[10px] text-white/50 w-36 shrink-0">{o.role}</span>
+                                    <span className="text-[10px] text-slate-500 w-36 shrink-0">{o.role}</span>
                                     <div className="flex-1"><Bar pct={(o.deployed / o.total) * 100} color={o.color} h={4} /></div>
-                                    <span className="text-[10px] font-mono text-white/60 w-16 text-right">{o.deployed}/{o.total}</span>
+                                    <span className="text-[10px] font-mono text-slate-600 w-16 text-right">{o.deployed}/{o.total}</span>
                                 </motion.div>
                             ))}
                         </div>
@@ -233,16 +233,16 @@ export default function ECICommandCenter() {
                             <motion.div key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 + i * 0.05 }}
                                 className="px-4 py-3 hover:bg-white/[0.02] cursor-pointer transition-colors">
                                 <div className="flex justify-between items-start mb-1">
-                                    <span className="text-[11px] text-white/80 font-medium">{c.type}</span>
+                                    <span className="text-[11px] text-slate-700 font-medium">{c.type}</span>
                                     <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: cvigilStatusColor[c.status], background: cvigilStatusColor[c.status] + "15" }}>{c.status}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[9px] text-white/30 font-mono">
+                                <div className="flex items-center gap-2 text-[9px] text-slate-500 font-mono">
                                     <span>{c.id}</span>
                                     <span>📍{c.location}</span>
                                     <span>🕐{c.time}</span>
                                 </div>
                                 <div className="flex items-center gap-2 mt-1.5">
-                                    <span className="text-[8px] bg-white/5 text-white/35 px-1.5 py-0.5 rounded font-mono">📎 {c.media}</span>
+                                    <span className="text-[8px] bg-white/5 text-slate-500 px-1.5 py-0.5 rounded font-mono">📎 {c.media}</span>
                                     {c.gps && <span className="text-[8px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded font-mono">📍 GPS</span>}
                                 </div>
                             </motion.div>
@@ -257,32 +257,32 @@ export default function ECICommandCenter() {
                         <div className="flex items-end gap-1.5 h-36 mb-2">
                             {hourlyTurnout.map((d, i) => (
                                 <div key={d.hour} className="flex-1 flex flex-col items-center gap-0.5">
-                                    <span className="text-[7px] font-mono text-white/40">{d.pct}%</span>
+                                    <span className="text-[7px] font-mono text-slate-500">{d.pct}%</span>
                                     <motion.div initial={{ height: 0 }} animate={{ height: `${(d.pct / maxPct) * 100}%` }}
                                         transition={{ duration: 0.7, delay: 0.3 + i * 0.04 }}
                                         className="w-full rounded-t-sm"
-                                        style={{ background: d.pct > 60 ? "linear-gradient(to top, #059669, #4ade80)" : d.pct > 40 ? "linear-gradient(to top, #d97706, #fbbf24)" : "linear-gradient(to top, #dc2626, #f87171)" }} />
-                                    <span className="text-[6px] font-mono text-white/20">{d.hour}</span>
+                                        style={{ background: d.pct > 60 ? "linear-gradient(to top, #059669, #10b981)" : d.pct > 40 ? "linear-gradient(to top, #d97706, #f59e0b)" : "linear-gradient(to top, #dc2626, #ef4444)" }} />
+                                    <span className="text-[6px] font-mono text-slate-400">{d.hour}</span>
                                 </div>
                             ))}
                         </div>
                         {/* Gender Split */}
-                        <div className="border-t border-white/[0.04] pt-3 mt-2 space-y-1.5">
-                            <div className="text-[8px] font-mono text-white/25 uppercase tracking-wider mb-1">Gender-wise Turnout</div>
+                        <div className="border-t border-slate-200 pt-3 mt-2 space-y-1.5">
+                            <div className="text-[8px] font-mono text-slate-400 uppercase tracking-wider mb-1">Gender-wise Turnout</div>
                             <div className="flex items-center gap-2">
-                                <span className="text-[9px] text-white/40 w-14">Male</span>
+                                <span className="text-[9px] text-slate-500 w-14">Male</span>
                                 <div className="flex-1"><Bar pct={65} color="#60a5fa" h={4} /></div>
-                                <span className="text-[9px] font-mono text-white/50 w-8">65%</span>
+                                <span className="text-[9px] font-mono text-slate-500 w-8">65%</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-[9px] text-white/40 w-14">Female</span>
+                                <span className="text-[9px] text-slate-500 w-14">Female</span>
                                 <div className="flex-1"><Bar pct={61} color="#f472b6" h={4} /></div>
-                                <span className="text-[9px] font-mono text-white/50 w-8">61%</span>
+                                <span className="text-[9px] font-mono text-slate-500 w-8">61%</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-[9px] text-white/40 w-14">Other</span>
+                                <span className="text-[9px] text-slate-500 w-14">Other</span>
                                 <div className="flex-1"><Bar pct={43} color="#818cf8" h={4} /></div>
-                                <span className="text-[9px] font-mono text-white/50 w-8">43%</span>
+                                <span className="text-[9px] font-mono text-slate-500 w-8">43%</span>
                             </div>
                         </div>
                     </div>
@@ -295,17 +295,17 @@ export default function ECICommandCenter() {
                     <div className="p-4 space-y-3">
                         {expenditureAlerts.map((e, i) => (
                             <motion.div key={e.candidate} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 + i * 0.06 }}
-                                className={`p-3 rounded-lg border transition-colors ${e.flag ? "bg-red-500/5 border-red-500/15" : "bg-white/[0.02] border-white/[0.05]"}`}>
+                                className={`p-3 rounded-lg border transition-colors ${e.flag ? "bg-red-500/5 border-red-500/15" : "bg-white/[0.02] border-slate-200"}`}>
                                 <div className="flex justify-between items-start mb-1.5">
                                     <div>
-                                        <span className="text-[11px] text-white/80 font-medium">{e.candidate}</span>
-                                        <p className="text-[9px] text-white/30 font-mono">{e.constituency}</p>
+                                        <span className="text-[11px] text-slate-700 font-medium">{e.candidate}</span>
+                                        <p className="text-[9px] text-slate-500 font-mono">{e.constituency}</p>
                                     </div>
                                     {e.flag && <span className="text-[7px] font-mono bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded animate-pulse">⚠ NEARING LIMIT</span>}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="flex-1"><Bar pct={(e.spent / e.limit) * 100} color={e.spent / e.limit > 0.85 ? "#f87171" : e.spent / e.limit > 0.6 ? "#fbbf24" : "#4ade80"} h={4} /></div>
-                                    <span className="text-[9px] font-mono text-white/50">₹{e.spent}L / {e.limit}L</span>
+                                    <div className="flex-1"><Bar pct={(e.spent / e.limit) * 100} color={e.spent / e.limit > 0.85 ? "#ef4444" : e.spent / e.limit > 0.6 ? "#f59e0b" : "#10b981"} h={4} /></div>
+                                    <span className="text-[9px] font-mono text-slate-500">₹{e.spent}L / {e.limit}L</span>
                                 </div>
                             </motion.div>
                         ))}
@@ -318,10 +318,10 @@ export default function ECICommandCenter() {
                 {/* State Alert Table */}
                 <ECICard delay={0.25}>
                     <ECISectionHeader title="State-wise Status" icon="map"
-                        action={<button className="text-[8px] font-mono px-2.5 py-1 rounded-md bg-white/5 text-white/40 hover:text-white/60 border border-white/10 transition-all">EXPORT →</button>} />
+                        action={<button className="text-[8px] font-mono px-2.5 py-1 rounded-md bg-white/5 text-slate-500 hover:text-slate-600 border border-slate-200 transition-all">EXPORT →</button>} />
                     <div className="overflow-x-auto custom-scrollbar">
                         <div className="min-w-[700px]">
-                            <div className="grid grid-cols-[1fr_65px_70px_55px_120px_80px] gap-2 px-5 py-2.5 border-b border-white/[0.04] text-[8px] font-mono text-white/20 uppercase tracking-[1.5px]">
+                            <div className="grid grid-cols-[1fr_65px_70px_55px_120px_80px] gap-2 px-5 py-2.5 border-b border-slate-200 text-[8px] font-mono text-slate-400 uppercase tracking-[1.5px]">
                                 <span>State</span><span>Booths</span><span>Violations</span><span>EVM</span><span>Turnout</span><span>Status</span>
                             </div>
                             {stateAlerts.map((s, i) => (
@@ -329,15 +329,15 @@ export default function ECICommandCenter() {
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.35 + i * 0.04 }}
-                                    className="grid grid-cols-[1fr_65px_70px_55px_120px_80px] gap-2 px-5 py-3 border-b border-white/[0.03] hover:bg-white/[0.015] transition-colors cursor-pointer items-center"
+                                    className="grid grid-cols-[1fr_65px_70px_55px_120px_80px] gap-2 px-5 py-3 border-b border-slate-200 hover:bg-white/[0.015] transition-colors cursor-pointer items-center"
                                 >
-                                    <span className="text-[11px] text-white/80 font-medium">{s.state}</span>
-                                    <span className="text-[10px] text-white/45 font-mono">{s.booths.toLocaleString()}</span>
-                                    <span className="text-[10px] font-mono" style={{ color: s.violations > 20 ? "#f87171" : "#4ade80" }}>{s.violations}</span>
-                                    <span className="text-[10px] font-mono" style={{ color: s.evmIssues > 0 ? "#f87171" : "#4ade80" }}>{s.evmIssues}</span>
+                                    <span className="text-[11px] text-slate-700 font-medium">{s.state}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono">{s.booths.toLocaleString()}</span>
+                                    <span className="text-[10px] font-mono" style={{ color: s.violations > 20 ? "#ef4444" : "#10b981" }}>{s.violations}</span>
+                                    <span className="text-[10px] font-mono" style={{ color: s.evmIssues > 0 ? "#ef4444" : "#10b981" }}>{s.evmIssues}</span>
                                     <div className="flex items-center gap-2">
-                                        <div className="flex-1"><Bar pct={s.turnout} color={s.turnout > 60 ? "#4ade80" : "#fbbf24"} h={4} /></div>
-                                        <span className="text-[9px] text-white/45 font-mono w-7">{s.turnout}%</span>
+                                        <div className="flex-1"><Bar pct={s.turnout} color={s.turnout > 60 ? "#10b981" : "#f59e0b"} h={4} /></div>
+                                        <span className="text-[9px] text-slate-500 font-mono w-7">{s.turnout}%</span>
                                     </div>
                                     <span className="text-[7px] font-mono px-1.5 py-0.5 rounded text-center" style={{ color: statusColor[s.status], background: statusColor[s.status] + "12" }}>{s.status}</span>
                                 </motion.div>
@@ -349,14 +349,14 @@ export default function ECICommandCenter() {
                 {/* Observer Diary */}
                 <ECICard delay={0.3}>
                     <ECISectionHeader title="Observer Diary" icon="edit_note"
-                        action={<span className="text-[8px] font-mono text-white/25">{diaryEntries.length} entries today</span>} />
+                        action={<span className="text-[8px] font-mono text-slate-400">{diaryEntries.length} entries today</span>} />
                     <div className="p-4">
                         {/* Quick Add */}
                         <div className="flex gap-2 mb-4">
                             <input value={diaryEntry} onChange={e => setDiaryEntry(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && addDiaryEntry()}
                                 placeholder="Quick diary entry..."
-                                className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] text-white/80 placeholder-white/20 focus:border-red-500/30 focus:outline-none transition-colors"
+                                className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] text-slate-700 placeholder-white/20 focus:border-red-500/30 focus:outline-none transition-colors"
                             />
                             <button onClick={addDiaryEntry}
                                 className="px-3 py-2 rounded-lg bg-red-500/12 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all text-[10px] font-mono shrink-0">
@@ -371,11 +371,11 @@ export default function ECICommandCenter() {
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0 }}
-                                        className="relative pl-5 pb-2.5 border-l-2 border-white/[0.06]"
+                                        className="relative pl-5 pb-2.5 border-l-2 border-slate-200"
                                     >
                                         <div className="absolute left-[-4px] top-1 w-2 h-2 rounded-full bg-red-400/60 border border-red-400/30" />
                                         <p className="text-[9px] font-mono text-red-400/50 mb-0.5">{e.time}</p>
-                                        <p className="text-[11px] text-white/60 leading-relaxed">{e.text}</p>
+                                        <p className="text-[11px] text-slate-600 leading-relaxed">{e.text}</p>
                                     </motion.div>
                                 ))}
                             </AnimatePresence>

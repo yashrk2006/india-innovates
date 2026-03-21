@@ -22,7 +22,7 @@ const workers = [
     { id: "W-010", name: "Kavita Yadav", phone: "98xx-xx8901", ward: "Ward 19", booth: "B-009", doorsToday: 5, keyVoters: 0, hoursActive: 1.5, rating: 3.5, status: "IDLE", lastPing: "1 hr ago", location: "Unknown", streak: 3 },
 ];
 
-const statusColor: Record<string, string> = { ACTIVE: "#4ade80", IDLE: "#fbbf24", OFFLINE: "#f87171" };
+const statusColor: Record<string, string> = { ACTIVE: "#10b981", IDLE: "#f59e0b", OFFLINE: "#ef4444" };
 
 export default function WorkerTrackerPage() {
     const [sortBy, setSortBy] = useState<"doors" | "rating" | "hours">("doors");
@@ -40,12 +40,12 @@ export default function WorkerTrackerPage() {
     const topPerformer = [...workers].sort((a, b) => b.doorsToday - a.doorsToday)[0];
 
     return (
-        <ManagerPageLayout title="Worker Tracker" badge="👥 FIELD TEAM" badgeColor="#c9a84c">
+        <ManagerPageLayout title="Worker Tracker" badge="👥 FIELD TEAM" badgeColor="#1e293b">
             <div className="grid grid-cols-5 gap-3">
-                <MgrKPI icon="group" label="Total Workers" value={workerStats?.total?.toString() || String(workers.length)} sub="In district" color="#c9a84c" delay={0} />
-                <MgrKPI icon="sprint" label="Active Now" value={workerStats?.active?.toString() || String(workers.filter(w => w.status === "ACTIVE").length)} sub="In field" color="#4ade80" delay={0.05} />
-                <MgrKPI icon="hourglass_empty" label="Idle" value={String(workers.filter(w => w.status === "IDLE").length)} sub="No recent activity" color="#fbbf24" delay={0.1} />
-                <MgrKPI icon="wifi_off" label="Offline" value={String(workers.filter(w => w.status === "OFFLINE").length)} sub="Unreachable" color="#f87171" delay={0.15} />
+                <MgrKPI icon="group" label="Total Workers" value={workerStats?.total?.toString() || String(workers.length)} sub="In district" color="#1e293b" delay={0} />
+                <MgrKPI icon="sprint" label="Active Now" value={workerStats?.active?.toString() || String(workers.filter(w => w.status === "ACTIVE").length)} sub="In field" color="#10b981" delay={0.05} />
+                <MgrKPI icon="hourglass_empty" label="Idle" value={String(workers.filter(w => w.status === "IDLE").length)} sub="No recent activity" color="#f59e0b" delay={0.1} />
+                <MgrKPI icon="wifi_off" label="Offline" value={String(workers.filter(w => w.status === "OFFLINE").length)} sub="Unreachable" color="#ef4444" delay={0.15} />
                 <MgrKPI icon="emoji_events" label="Top Performer" value={topPerformer.name.split(" ")[0]} sub={`${topPerformer.doorsToday} doors today`} color="#e8761a" delay={0.2} />
             </div>
 
@@ -55,32 +55,32 @@ export default function WorkerTrackerPage() {
                         <div className="flex gap-3 items-center">
                             <div className="flex gap-1">
                                 {["ALL", "ACTIVE", "IDLE", "OFFLINE"].map(f => (
-                                    <button key={f} onClick={() => setFilter(f)} className={`text-[8px] font-mono px-2 py-0.5 rounded ${filter === f ? "bg-[#c9a84c]/15 text-[#c9a84c]" : "text-white/20 hover:text-white/40"}`}>{f}</button>
+                                    <button key={f} onClick={() => setFilter(f)} className={`text-[8px] font-mono px-2 py-0.5 rounded ${filter === f ? "bg-[#1e293b]/15 text-[#1e293b]" : "text-slate-400 hover:text-slate-500"}`}>{f}</button>
                                 ))}
                             </div>
-                            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="bg-white/5 border border-white/[0.06] rounded px-2 py-0.5 text-[8px] font-mono text-white/40 outline-none">
+                            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="bg-slate-50 border border-slate-200 rounded px-2 py-0.5 text-[8px] font-mono text-slate-500 outline-none">
                                 <option value="doors">Sort: Doors</option><option value="rating">Sort: Rating</option><option value="hours">Sort: Hours</option>
                             </select>
                         </div>
                     } />
-                    <div className="grid grid-cols-[40px_1fr_70px_60px_55px_50px_55px_60px] gap-2 px-4 py-2 border-b border-white/[0.04] text-[8px] font-mono text-white/15 uppercase tracking-wider">
+                    <div className="grid grid-cols-[40px_1fr_70px_60px_55px_50px_55px_60px] gap-2 px-4 py-2 border-b border-slate-200 text-[8px] font-mono text-slate-500 uppercase tracking-wider">
                         <span>#</span><span>Worker</span><span>Ward</span><span>Doors</span><span>Key</span><span>Hrs</span><span>Rating</span><span>Status</span>
                     </div>
                     {sorted.map((w, i) => (
                         <motion.div key={w.id} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                            className="grid grid-cols-[40px_1fr_70px_60px_55px_50px_55px_60px] gap-2 px-4 py-3 border-b border-white/[0.02] hover:bg-white/[0.015] transition-colors items-center cursor-pointer">
-                            <span className={`font-mono text-[11px] font-bold ${i < 3 ? "text-[#c9a84c]" : "text-white/20"}`}>{i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</span>
+                            className="grid grid-cols-[40px_1fr_70px_60px_55px_50px_55px_60px] gap-2 px-4 py-3 border-b border-slate-200 hover:bg-slate-50 transition-colors items-center cursor-pointer">
+                            <span className={`font-mono text-[11px] font-bold ${i < 3 ? "text-[#1e293b]" : "text-slate-400"}`}>{i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</span>
                             <div>
-                                <span className="text-[11px] text-white/80 font-medium block">{w.name}</span>
-                                <span className="text-[8px] text-white/20 font-mono">{w.booth} · {w.lastPing}</span>
+                                <span className="text-[11px] text-slate-500 font-medium block">{w.name}</span>
+                                <span className="text-[8px] text-slate-400 font-mono">{w.booth} · {w.lastPing}</span>
                             </div>
-                            <span className="text-[10px] text-white/40">{w.ward}</span>
-                            <span className="text-[11px] font-mono font-bold text-[#c9a84c]">{w.doorsToday}</span>
-                            <span className="text-[10px] font-mono text-white/50">{w.keyVoters}</span>
-                            <span className="text-[10px] font-mono text-white/40">{w.hoursActive}h</span>
+                            <span className="text-[10px] text-slate-500">{w.ward}</span>
+                            <span className="text-[11px] font-mono font-bold text-[#1e293b]">{w.doorsToday}</span>
+                            <span className="text-[10px] font-mono text-slate-500">{w.keyVoters}</span>
+                            <span className="text-[10px] font-mono text-slate-500">{w.hoursActive}h</span>
                             <div className="flex items-center gap-0.5">
-                                <Icon name="star" size={10} className="text-[#c9a84c]" />
-                                <span className="text-[10px] font-mono text-[#c9a84c]">{w.rating}</span>
+                                <Icon name="star" size={10} className="text-[#1e293b]" />
+                                <span className="text-[10px] font-mono text-[#1e293b]">{w.rating}</span>
                             </div>
                             <span className="text-[7px] font-mono px-1.5 py-0.5 rounded text-center" style={{ color: statusColor[w.status], background: statusColor[w.status] + "12" }}>{w.status}</span>
                         </motion.div>
@@ -92,13 +92,13 @@ export default function WorkerTrackerPage() {
                         <MgrSection title="Team Summary" icon="analytics" />
                         <div className="p-4 space-y-3">
                             {[
-                                { label: "Avg Doors/Worker", value: String(Math.round(workers.reduce((s, w) => s + w.doorsToday, 0) / workers.length)), color: "#c9a84c" },
+                                { label: "Avg Doors/Worker", value: String(Math.round(workers.reduce((s, w) => s + w.doorsToday, 0) / workers.length)), color: "#1e293b" },
                                 { label: "Avg Hours Active", value: (workers.reduce((s, w) => s + w.hoursActive, 0) / workers.length).toFixed(1) + "h", color: "#60a5fa" },
-                                { label: "Key Voters Found", value: String(workers.reduce((s, w) => s + w.keyVoters, 0)), color: "#4ade80" },
+                                { label: "Key Voters Found", value: String(workers.reduce((s, w) => s + w.keyVoters, 0)), color: "#10b981" },
                                 { label: "Avg Rating", value: (workers.reduce((s, w) => s + w.rating, 0) / workers.length).toFixed(1), color: "#e8761a" },
                             ].map(s => (
-                                <div key={s.label} className="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                                    <span className="text-[10px] text-white/35">{s.label}</span>
+                                <div key={s.label} className="flex justify-between items-center py-2 border-b border-slate-200">
+                                    <span className="text-[10px] text-slate-500">{s.label}</span>
                                     <span className="text-[14px] font-bold font-mono" style={{ color: s.color }}>{s.value}</span>
                                 </div>
                             ))}
@@ -110,10 +110,10 @@ export default function WorkerTrackerPage() {
                         <div className="p-4 space-y-2">
                             {[...workers].sort((a, b) => b.streak - a.streak).slice(0, 5).map((w, i) => (
                                 <motion.div key={w.id} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 + i * 0.04 }}
-                                    className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                                    className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[9px] text-white/20 font-mono w-4">{i + 1}</span>
-                                        <span className="text-[10px] text-white/60">{w.name}</span>
+                                        <span className="text-[9px] text-slate-400 font-mono w-4">{i + 1}</span>
+                                        <span className="text-[10px] text-slate-500">{w.name}</span>
                                     </div>
                                     <span className="text-[11px] font-mono font-bold text-orange-400">{w.streak} days</span>
                                 </motion.div>
@@ -133,7 +133,7 @@ export default function WorkerTrackerPage() {
                                     if (res.ok) toast("Broadcast sent to all active workers", "success");
                                     else toast("Failed to send broadcast", "error");
                                 } catch { toast("Network error", "error"); }
-                            }} className="w-full text-[10px] font-mono py-2.5 rounded-lg bg-[#c9a84c]/12 text-[#c9a84c] border border-[#c9a84c]/25 hover:bg-[#c9a84c]/20 transition-all flex items-center justify-center gap-1.5">
+                            }} className="w-full text-[10px] font-mono py-2.5 rounded-lg bg-[#1e293b]/12 text-[#1e293b] border border-[#1e293b]/25 hover:bg-[#1e293b]/20 transition-all flex items-center justify-center gap-1.5">
                                 <Icon name="broadcast_on_personal" size={14} /> BROADCAST MESSAGE
                             </button>
                         </div>

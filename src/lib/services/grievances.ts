@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { createClient } from "@/utils/supabase/client";
 import type { Grievance } from "../types";
 
 // ── GRIEVANCE SERVICE ────────────────────────────────────────────
@@ -13,6 +13,7 @@ export async function getGrievances(filters?: {
     category?: string;
     limit?: number;
 }): Promise<Grievance[]> {
+    const supabase = createClient();
     let query = supabase
         .from("grievances")
         .select("*")
@@ -36,6 +37,7 @@ export async function getGrievances(filters?: {
  * Get grievance stats — counts by category and status.
  */
 export async function getGrievanceStats(boothId?: number) {
+    const supabase = createClient();
     let query = supabase.from("grievances").select("category, status");
     if (boothId) query = query.eq("booth_id", boothId);
 
@@ -69,26 +71,38 @@ export async function createGrievance(grievance: {
     location?: string;
     photo_url?: string;
 }): Promise<Grievance | null> {
+    const supabase = createClient();
+    const insertData: any = {
+        category: grievance.category,
+        description: grievance.description,
+        status: "submitted",
+    };
+
+    if (grievance.voter_id) insertData.voter_id = grievance.voter_id;
+    if (grievance.booth_id) insertData.booth_id = grievance.booth_id;
+    if (grievance.title) insertData.title = grievance.title;
+    if (grievance.location) insertData.location = grievance.location;
+    if (grievance.photo_url) insertData.photo_url = grievance.photo_url;
+
+    console.log("[createGrievance] Payload:", insertData);
+
     const { data, error } = await supabase
         .from("grievances")
-        .insert({
-            voter_id: grievance.voter_id || null,
-            booth_id: grievance.booth_id || null,
-            category: grievance.category,
-            title: grievance.title || null,
-            description: grievance.description,
-            location: grievance.location || null,
-            photo_url: grievance.photo_url || null,
-            status: "submitted",
-        })
-        .select()
-        .single();
+        .insert(insertData)
+        .select();
 
     if (error) {
-        console.error("Error creating grievance:", error.message);
+        console.error("Supabase Error [createGrievance]:", {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+        });
         return null;
     }
-    return data as Grievance;
+    
+    // Return the first inserted row
+    return data && data.length > 0 ? (data[0] as Grievance) : null;
 }
 
 /**
@@ -102,6 +116,7 @@ export async function updateGrievanceStatus(
         resolution_note?: string;
     }
 ): Promise<Grievance | null> {
+    const supabase = createClient();
     const updateData: Record<string, unknown> = { status: updates.status };
     if (updates.assigned_to) updateData.assigned_to = updates.assigned_to;
     if (updates.resolution_note) updateData.resolution_note = updates.resolution_note;
@@ -125,19 +140,37 @@ export async function updateGrievanceStatus(
  * Upload a grievance photo to Supabase Storage.
  */
 export async function uploadGrievancePhoto(file: File): Promise<string | null> {
+    const supabase = createClient();
     const fileName = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage
-        .from("grievance-photos")
-        .upload(fileName, file);
+    console.log(`[Storage] Attempting upload: ${fileName} to 'grievance-photos'`);
+    
+    try {
+        const { data, error } = await supabase.storage
+            .from("grievance-photos")
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
 
-    if (error) {
-        console.error("Error uploading photo:", error.message);
+        if (error) {
+            console.error("[Storage] Supabase Upload Error:", {
+                message: error.message,
+                name: error.name,
+                status: (error as any).status,
+                details: error
+            });
+            return null;
+        }
+
+        console.log("[Storage] Upload success:", data);
+
+        const { data: urlData } = supabase.storage
+            .from("grievance-photos")
+            .getPublicUrl(fileName);
+
+        return urlData.publicUrl;
+    } catch (err) {
+        console.error("[Storage] Unexpected error during upload:", err);
         return null;
     }
-
-    const { data: urlData } = supabase.storage
-        .from("grievance-photos")
-        .getPublicUrl(fileName);
-
-    return urlData.publicUrl;
 }

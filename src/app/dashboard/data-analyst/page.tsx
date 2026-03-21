@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { useSidebar } from "@/components/data-analyst/SidebarContext";
 
 /* ── Icon helper ── */
 function Icon({ name, className = "", size, style }: { name: string; className?: string; size?: number; style?: React.CSSProperties }) {
@@ -12,16 +14,16 @@ function Icon({ name, className = "", size, style }: { name: string; className?:
 /* ── KPI Card ── */
 function KPI({ icon, label, value, sub, color = "var(--gold)" }: { icon: string; label: string; value: string; sub?: string; color?: string }) {
     return (
-        <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded p-4 relative overflow-hidden">
+        <div className="bg-white shadow-sm border border-slate-200 rounded p-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
             <div className="flex justify-between items-start">
                 <div>
-                    <p className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f0ece3]/25 mb-2">{label}</p>
-                    <p className="font-serif text-[28px] font-bold text-[#f0ece3] leading-none">{value}</p>
+                    <p className="font-mono text-[9px] tracking-[2.5px] uppercase text-slate-700/25 mb-2">{label}</p>
+                    <p className="font-serif text-[28px] font-bold text-slate-700 leading-none">{value}</p>
                     {sub && <p className="font-mono text-[9px] mt-1.5" style={{ color }}>{sub}</p>}
                 </div>
                 <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: color + "18", border: `1px solid ${color}30` }}>
-                    <Icon name={icon} size={14} className="text-[#c9a84c]" />
+                    <Icon name={icon} size={14} className="text-[#1e293b]" />
                 </div>
             </div>
         </div>
@@ -31,7 +33,7 @@ function KPI({ icon, label, value, sub, color = "var(--gold)" }: { icon: string;
 /* ── Progress Bar ── */
 function Bar({ pct, color = "var(--gold)", h = 4 }: { pct: number; color?: string; h?: number }) {
     return (
-        <div className="bg-[rgba(255,255,255,0.05)] rounded-sm overflow-hidden" style={{ height: h }}>
+        <div className="bg-[rgba(30,41,59,0.1)] rounded-sm overflow-hidden" style={{ height: h }}>
             <div className="rounded-sm transition-all duration-1000 ease-out" style={{ width: `${pct}%`, background: color, height: h }} />
         </div>
     );
@@ -40,7 +42,7 @@ function Bar({ pct, color = "var(--gold)", h = 4 }: { pct: number; color?: strin
 /* ── Sidebar Nav Item ── */
 function NavItem({ icon, label, active = false, href = "#" }: { icon: string; label: string; active?: boolean; href?: string }) {
     return (
-        <Link href={href} className={`flex items-center gap-2.5 px-3.5 py-2 rounded text-[11px] font-mono tracking-[0.5px] border-l-2 transition-all cursor-pointer select-none ${active ? "text-[#c9a84c] bg-[rgba(201,168,76,0.12)] border-l-[#c9a84c]" : "text-[#f0ece3]/25 border-l-transparent hover:text-[#f0ece3]/65 hover:bg-[#f0ece3]/[0.03] hover:border-l-[rgba(201,168,76,0.14)]"}`}>
+        <Link href={href} className={`flex items-center gap-2.5 px-3.5 py-2 rounded text-[11px] font-mono tracking-[0.5px] border-l-2 transition-all cursor-pointer select-none ${active ? "text-[#1e293b] bg-[rgba(30,41,59,0.2)] border-l-[#1e293b]" : "text-slate-700/25 border-l-transparent hover:text-slate-700/65 hover:bg-[#334155]/[0.03] hover:border-l-[rgba(30,41,59,0.2)]"}`}>
             <Icon name={icon} size={16} />
             <span>{label}</span>
         </Link>
@@ -48,7 +50,7 @@ function NavItem({ icon, label, active = false, href = "#" }: { icon: string; la
 }
 
 function NavLabel({ text }: { text: string }) {
-    return <p className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f0ece3]/25 px-3.5 pt-3 pb-1">{text}</p>;
+    return <p className="font-mono text-[9px] tracking-[2.5px] uppercase text-slate-700/25 px-3.5 pt-3 pb-1">{text}</p>;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -57,12 +59,7 @@ function NavLabel({ text }: { text: string }) {
 export default function DataAnalystDashboard() {
     const router = useRouter();
     const [activeSegment, setActiveSegment] = useState("demographics");
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    const handleLogout = () => {
-        document.cookie = "user_role=; path=/; max-age=0";
-        router.push("/auth?role=data-analyst");
-    };
+    const { isOpen, setIsOpen } = useSidebar();
 
     /* Mock Data */
     const voterSegments = [
@@ -102,74 +99,18 @@ export default function DataAnalystDashboard() {
         { constituency: "Lucknow South", win_prob: 44, margin: "-3K", trend: "DOWN" },
     ];
 
-    const sentimentColor = (v: number) => v > 0.7 ? "#4ade80" : v > 0.5 ? "#c9a84c" : v > 0.3 ? "#fbbf24" : "#f87171";
-    const trendColor: Record<string, string> = { UP: "#4ade80", STABLE: "#c9a84c", DOWN: "#f87171" };
+    const sentimentColor = (v: number) => v > 0.7 ? "#10b981" : v > 0.5 ? "#1e293b" : v > 0.3 ? "#f59e0b" : "#ef4444";
+    const trendColor: Record<string, string> = { UP: "#10b981", STABLE: "#1e293b", DOWN: "#ef4444" };
     const trendIcon: Record<string, string> = { UP: "trending_up", STABLE: "trending_flat", DOWN: "trending_down" };
 
     return (
-        <div className="flex h-screen bg-[#08090f] text-[#f0ece3] overflow-hidden" style={{ fontFamily: "'Public Sans', 'Literata', serif" }}>
-            {/* Mobile Sidebar Overlay */}
-            {isSidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
-                    onClick={() => setIsSidebarOpen(false)}
-                />
-            )}
-
-            {/* ─── Left Sidebar ─── */}
-            <aside className={`absolute z-50 md:relative w-64 h-full bg-[#0d0f1a] border-r border-[rgba(201,168,76,0.14)] flex flex-col flex-shrink-0 transform transition-transform duration-300 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
-                <div className="p-5 border-b border-[rgba(255,255,255,0.05)] flex justify-between items-center">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded bg-cyan-500 flex items-center justify-center text-[#08090f]">
-                            <Icon name="analytics" size={18} />
-                        </div>
-                        <div>
-                            <h1 className="text-white text-sm font-bold tracking-tight leading-none">DATA ANALYST</h1>
-                            <span className="text-[9px] font-mono text-cyan-400 tracking-[2px] uppercase">Intelligence</span>
-                        </div>
-                    </div>
-                </div>
-
-                <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto">
-                    <NavLabel text="Analysis" />
-                    <NavItem icon="dashboard" label="Overview" active href="/dashboard/data-analyst" />
-                    <NavItem icon="bubble_chart" label="Knowledge Graph" />
-                    <NavItem icon="group" label="Voter Segments" href="/dashboard/data-analyst/voter-segments" />
-
-                    <NavLabel text="Intelligence" />
-                    <NavItem icon="psychology" label="Sentiment Engine" />
-                    <NavItem icon="query_stats" label="Predictive Model" />
-                    <NavItem icon="schema" label="Network Map" />
-
-                    <NavLabel text="Reports" />
-                    <NavItem icon="summarize" label="Generate Report" />
-                    <NavItem icon="download" label="Data Export" />
-                </nav>
-
-                <div className="p-4 border-t border-[rgba(255,255,255,0.05)]">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#111520] border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-serif font-bold text-sm">
-                            AK
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-white text-xs font-medium truncate">Aarav Kapoor</p>
-                            <p className="text-[#f0ece3]/25 text-[9px] font-mono truncate">Sr. Data Analyst</p>
-                        </div>
-                        <button onClick={handleLogout} className="text-[#f0ece3]/25 hover:text-red-400 transition-colors">
-                            <Icon name="logout" size={16} />
+        <main className="flex-1 overflow-y-auto relative w-full h-full">
+            <header className="sticky top-0 z-40 bg-stone-50/95 backdrop-blur-sm border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <button className="md:hidden text-slate-900" onClick={() => setIsOpen(!isOpen)}>
+                        <Icon name="menu" />
                         </button>
-                    </div>
-                </div>
-            </aside>
-
-            {/* ─── Main Content ─── */}
-            <main className="flex-1 overflow-y-auto">
-                <header className="sticky top-0 z-40 bg-[#08090f]/95 backdrop-blur-sm border-b border-[rgba(255,255,255,0.05)] px-4 sm:px-6 py-3.5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <button className="md:hidden text-white" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                            <Icon name="menu" />
-                        </button>
-                        <h2 className="text-white text-base sm:text-lg font-serif font-bold truncate max-w-[150px] sm:max-w-none">Intelligence Dashboard</h2>
+                        <h2 className="text-slate-900 text-base sm:text-lg font-serif font-bold truncate max-w-[150px] sm:max-w-none">Intelligence Dashboard</h2>
                         <span className="hidden sm:inline-block font-mono text-[9px] text-cyan-400 tracking-[1.5px] uppercase bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
                             LIVE ANALYTICS
                         </span>
@@ -177,7 +118,7 @@ export default function DataAnalystDashboard() {
                     <div className="flex items-center gap-3">
                         <div className="flex gap-1">
                             {["demographics", "sentiment", "predictive"].map(tab => (
-                                <button key={tab} onClick={() => setActiveSegment(tab)} className={`font-mono text-[9px] tracking-[1px] uppercase px-3 py-1.5 rounded transition-all ${activeSegment === tab ? "bg-[#c9a84c] text-[#08090f] font-bold" : "text-[#f0ece3]/30 hover:text-[#f0ece3]/60 border border-[rgba(255,255,255,0.05)]"}`}>
+                                <button key={tab} onClick={() => setActiveSegment(tab)} className={`font-mono text-[9px] tracking-[1px] uppercase px-3 py-1.5 rounded transition-all ${activeSegment === tab ? "bg-[#1e293b] text-[#f8fafc] font-bold" : "text-slate-700/30 hover:text-slate-700/60 border border-slate-200"}`}>
                                     {tab}
                                 </button>
                             ))}
@@ -189,27 +130,27 @@ export default function DataAnalystDashboard() {
                     {/* ── KPI Row ── */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         <KPI icon="people" label="Total Voters" value="13.4L" sub="Lucknow District" />
-                        <KPI icon="trending_up" label="Approval Rating" value="67%" sub="↑ 6pts from Oct" color="#4ade80" />
-                        <KPI icon="swap_horiz" label="Swing Voters" value="22%" sub="~2.9L voters" color="#fbbf24" />
-                        <KPI icon="thumb_up" label="Net Sentiment" value="+0.34" sub="Positive trend" color="#c9a84c" />
+                        <KPI icon="trending_up" label="Approval Rating" value="67%" sub="↑ 6pts from Oct" color="#10b981" />
+                        <KPI icon="swap_horiz" label="Swing Voters" value="22%" sub="~2.9L voters" color="#f59e0b" />
+                        <KPI icon="thumb_up" label="Net Sentiment" value="+0.34" sub="Positive trend" color="#1e293b" />
                         <KPI icon="trophy" label="Win Probability" value="72%" sub="Avg. across 5 seats" color="#e8761a" />
                     </div>
 
                     {/* ── Main Grid ── */}
                     <div className="flex flex-col xl:grid xl:grid-cols-[1.3fr_1fr] gap-6">
                         {/* Left: Voter Segmentation Table */}
-                        <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                            <div className="bg-[#161b28] px-4 py-3 flex items-center justify-between border-b border-[rgba(255,255,255,0.05)]">
-                                <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#c9a84c] flex items-center gap-2">
+                        <div className="bg-white shadow-sm border border-slate-200 rounded overflow-hidden">
+                            <div className="bg-slate-50 px-4 py-3 flex items-center justify-between border-b border-slate-200">
+                                <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#1e293b] flex items-center gap-2">
                                     <Icon name="donut_large" size={12} /> Voter Segmentation Analysis
                                 </h3>
-                                <button className="font-mono text-[9px] tracking-[1px] uppercase text-[#f0ece3]/25 hover:text-[#c9a84c] border border-[rgba(255,255,255,0.05)] hover:border-[#c9a84c] px-3 py-1 rounded transition-all">
+                                <button className="font-mono text-[9px] tracking-[1px] uppercase text-slate-700/25 hover:text-[#1e293b] border border-slate-200 hover:border-[#1e293b] px-3 py-1 rounded transition-all">
                                     Export
                                 </button>
                             </div>
                             <div className="overflow-x-auto custom-scrollbar">
                                 <div className="min-w-[600px]">
-                                    <div className="grid grid-cols-[1fr_70px_80px_90px_90px_60px] gap-2 px-4 py-2.5 border-b border-[rgba(255,255,255,0.05)] font-mono text-[9px] tracking-[1px] uppercase text-[#f0ece3]/25">
+                                    <div className="grid grid-cols-[1fr_70px_80px_90px_90px_60px] gap-2 px-4 py-2.5 border-b border-slate-200 font-mono text-[9px] tracking-[1px] uppercase text-slate-700/25">
                                         <span>Segment</span>
                                         <span>Voters</span>
                                         <span>Swing %</span>
@@ -218,21 +159,21 @@ export default function DataAnalystDashboard() {
                                         <span>Growth</span>
                                     </div>
                                     {voterSegments.map((seg, i) => (
-                                        <div key={seg.segment} className={`grid grid-cols-[1fr_70px_80px_90px_90px_60px] gap-2 px-4 py-3 border-b border-[rgba(255,255,255,0.03)] hover:bg-[#f0ece3]/[0.02] transition-colors cursor-pointer items-center ${i % 2 === 0 ? "" : "bg-[#0d0f1a]/30"}`}>
-                                            <span className="text-[11px] text-white/80 font-medium">{seg.segment}</span>
-                                            <span className="font-mono text-[11px] text-[#f0ece3]/50">{seg.voters}</span>
+                                        <div key={seg.segment} className={`grid grid-cols-[1fr_70px_80px_90px_90px_60px] gap-2 px-4 py-3 border-b border-[rgba(30,41,59,0.1)] hover:bg-[#334155]/[0.02] transition-colors cursor-pointer items-center ${i % 2 === 0 ? "" : "bg-[#0d0f1a]/30"}`}>
+                                            <span className="text-[11px] text-slate-700 font-medium">{seg.segment}</span>
+                                            <span className="font-mono text-[11px] text-slate-700/50">{seg.voters}</span>
                                             <div className="flex items-center gap-1">
-                                                <Bar pct={seg.swing} color={seg.swing > 30 ? "#fbbf24" : "#c9a84c"} h={3} />
-                                                <span className="font-mono text-[9px] text-[#f0ece3]/30 w-8 text-right">{seg.swing}%</span>
+                                                <Bar pct={seg.swing} color={seg.swing > 30 ? "#f59e0b" : "#1e293b"} h={3} />
+                                                <span className="font-mono text-[9px] text-slate-700/30 w-8 text-right">{seg.swing}%</span>
                                             </div>
-                                            <span className={`text-[10px] ${seg.lean === "Strong Base" || seg.lean === "Loyal" ? "text-[#4ade80]" : seg.lean === "Favourable" ? "text-[#c9a84c]" : seg.lean === "Undecided" ? "text-[#fbbf24]" : "text-[#f0ece3]/40"}`}>
+                                            <span className={`text-[10px] ${seg.lean === "Strong Base" || seg.lean === "Loyal" ? "text-[#10b981]" : seg.lean === "Favourable" ? "text-[#1e293b]" : seg.lean === "Undecided" ? "text-[#f59e0b]" : "text-slate-700/40"}`}>
                                                 {seg.lean}
                                             </span>
                                             <div className="flex items-center gap-1">
                                                 <div className="w-3 h-3 rounded-full" style={{ background: sentimentColor(seg.sentiment) }} />
-                                                <span className="font-mono text-[10px] text-[#f0ece3]/50">{seg.sentiment.toFixed(2)}</span>
+                                                <span className="font-mono text-[10px] text-slate-700/50">{seg.sentiment.toFixed(2)}</span>
                                             </div>
-                                            <span className={`font-mono text-[10px] ${seg.growth.startsWith("+") ? "text-[#4ade80]" : "text-[#f87171]"}`}>{seg.growth}</span>
+                                            <span className={`font-mono text-[10px] ${seg.growth.startsWith("+") ? "text-[#10b981]" : "text-[#ef4444]"}`}>{seg.growth}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -241,25 +182,25 @@ export default function DataAnalystDashboard() {
 
                         {/* Right: Constituency Predictions */}
                         <div className="space-y-5">
-                            <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                                <div className="bg-[#161b28] px-4 py-3 border-b border-[rgba(255,255,255,0.05)]">
+                            <div className="bg-white shadow-sm border border-slate-200 rounded overflow-hidden">
+                                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
                                     <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#e8761a] flex items-center gap-2">
                                         <Icon name="casino" size={12} /> Win Probability Forecast
                                     </h3>
                                 </div>
-                                <div className="divide-y divide-[rgba(255,255,255,0.03)]">
+                                <div className="divide-y divide-[rgba(30,41,59,0.1)]">
                                     {predictions.map(p => (
-                                        <div key={p.constituency} className="px-4 py-3 hover:bg-[#f0ece3]/[0.02] transition-colors cursor-pointer">
+                                        <div key={p.constituency} className="px-4 py-3 hover:bg-[#334155]/[0.02] transition-colors cursor-pointer">
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-[11px] text-white/80 font-medium">{p.constituency}</span>
+                                                <span className="text-[11px] text-slate-700 font-medium">{p.constituency}</span>
                                                 <div className="flex items-center gap-1.5">
                                                     <Icon name={trendIcon[p.trend]} size={14} style={{ color: trendColor[p.trend] }} />
                                                     <span className="font-mono text-[10px]" style={{ color: trendColor[p.trend] }}>{p.margin}</span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Bar pct={p.win_prob} color={p.win_prob > 65 ? "#4ade80" : p.win_prob > 50 ? "#c9a84c" : "#f87171"} h={5} />
-                                                <span className={`font-mono text-[11px] font-bold w-10 text-right ${p.win_prob > 65 ? "text-[#4ade80]" : p.win_prob > 50 ? "text-[#c9a84c]" : "text-[#f87171]"}`}>
+                                                <Bar pct={p.win_prob} color={p.win_prob > 65 ? "#10b981" : p.win_prob > 50 ? "#1e293b" : "#ef4444"} h={5} />
+                                                <span className={`font-mono text-[11px] font-bold w-10 text-right ${p.win_prob > 65 ? "text-[#10b981]" : p.win_prob > 50 ? "text-[#1e293b]" : "text-[#ef4444]"}`}>
                                                     {p.win_prob}%
                                                 </span>
                                             </div>
@@ -269,9 +210,9 @@ export default function DataAnalystDashboard() {
                             </div>
 
                             {/* Approval Trend */}
-                            <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                                <div className="bg-[#161b28] px-4 py-3 border-b border-[rgba(255,255,255,0.05)]">
-                                    <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#c9a84c] flex items-center gap-2">
+                            <div className="bg-white shadow-sm border border-slate-200 rounded overflow-hidden">
+                                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                                    <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#1e293b] flex items-center gap-2">
                                         <Icon name="show_chart" size={12} /> 6-Month Approval Trend
                                     </h3>
                                 </div>
@@ -280,23 +221,23 @@ export default function DataAnalystDashboard() {
                                         <div className="flex items-end gap-3 h-28">
                                             {trendData.map(d => (
                                                 <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
-                                                    <span className="font-mono text-[9px] text-[#4ade80]">{d.approval}%</span>
+                                                    <span className="font-mono text-[9px] text-[#10b981]">{d.approval}%</span>
                                                     <div className="w-full flex flex-col gap-0.5 flex-1 justify-end">
-                                                        <div className="w-full rounded-t bg-[#4ade80]/80 transition-all" style={{ height: `${d.approval}%` }} />
-                                                        <div className="w-full rounded-b bg-[#f87171]/40 transition-all" style={{ height: `${d.opposition}%` }} />
+                                                        <div className="w-full rounded-t bg-[#10b981]/80 transition-all" style={{ height: `${d.approval}%` }} />
+                                                        <div className="w-full rounded-b bg-[#ef4444]/40 transition-all" style={{ height: `${d.opposition}%` }} />
                                                     </div>
-                                                    <span className="font-mono text-[8px] text-[#f0ece3]/25">{d.month}</span>
+                                                    <span className="font-mono text-[8px] text-slate-700/25">{d.month}</span>
                                                 </div>
                                             ))}
                                         </div>
                                         <div className="flex items-center justify-center gap-4 mt-3">
                                             <div className="flex items-center gap-1.5">
-                                                <div className="w-2.5 h-2.5 rounded-sm bg-[#4ade80]/80" />
-                                                <span className="font-mono text-[8px] text-[#f0ece3]/30">Approval</span>
+                                                <div className="w-2.5 h-2.5 rounded-sm bg-[#10b981]/80" />
+                                                <span className="font-mono text-[8px] text-slate-700/30">Approval</span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <div className="w-2.5 h-2.5 rounded-sm bg-[#f87171]/40" />
-                                                <span className="font-mono text-[8px] text-[#f0ece3]/30">Opposition</span>
+                                                <div className="w-2.5 h-2.5 rounded-sm bg-[#ef4444]/40" />
+                                                <span className="font-mono text-[8px] text-slate-700/30">Opposition</span>
                                             </div>
                                         </div>
                                     </div>
@@ -306,24 +247,24 @@ export default function DataAnalystDashboard() {
                     </div>
 
                     {/* ── Bottom: Issue Importance Radar ── */}
-                    <div className="bg-[#111520] border border-[rgba(201,168,76,0.14)] rounded overflow-hidden">
-                        <div className="bg-[#161b28] px-4 py-3 border-b border-[rgba(255,255,255,0.05)]">
-                            <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#c9a84c] flex items-center gap-2">
+                    <div className="bg-white shadow-sm border border-slate-200 rounded overflow-hidden">
+                        <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                            <h3 className="font-mono text-[9px] tracking-[2.5px] uppercase text-[#1e293b] flex items-center gap-2">
                                 <Icon name="priority_high" size={12} /> Issue Importance vs Sentiment
                             </h3>
                         </div>
                         <div className="p-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 {issueData.map(issue => (
-                                    <div key={issue.issue} className="bg-[#0d0f1a] border border-[rgba(255,255,255,0.03)] rounded p-3">
+                                    <div key={issue.issue} className="bg-[#0d0f1a] border border-[rgba(30,41,59,0.1)] rounded p-3">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[11px] text-white/70 font-medium">{issue.issue}</span>
-                                            <div className={`w-2 h-2 rounded-full ${issue.sentiment > 0 ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
+                                            <span className="text-[11px] text-slate-600 font-medium">{issue.issue}</span>
+                                            <div className={`w-2 h-2 rounded-full ${issue.sentiment > 0 ? "bg-[#10b981]" : "bg-[#ef4444]"}`} />
                                         </div>
-                                        <Bar pct={issue.importance} color={issue.sentiment > 0 ? "#c9a84c" : "#f87171"} h={4} />
+                                        <Bar pct={issue.importance} color={issue.sentiment > 0 ? "#1e293b" : "#ef4444"} h={4} />
                                         <div className="flex justify-between mt-1.5">
-                                            <span className="font-mono text-[8px] text-[#f0ece3]/25">IMP: {issue.importance}%</span>
-                                            <span className={`font-mono text-[8px] ${issue.sentiment > 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+                                            <span className="font-mono text-[8px] text-slate-700/25">IMP: {issue.importance}%</span>
+                                            <span className={`font-mono text-[8px] ${issue.sentiment > 0 ? "text-[#10b981]" : "text-[#ef4444]"}`}>
                                                 {issue.sentiment > 0 ? "+" : ""}{issue.sentiment.toFixed(1)}
                                             </span>
                                         </div>
@@ -334,6 +275,5 @@ export default function DataAnalystDashboard() {
                     </div>
                 </div>
             </main>
-        </div>
     );
 }

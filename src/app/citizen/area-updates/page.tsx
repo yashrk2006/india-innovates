@@ -4,6 +4,8 @@
 import { useState, useRef, useEffect } from "react";
 import { getInfrastructureProjects, toggleLikeProject } from "@/lib/services";
 import type { InfrastructureProject } from "@/lib/types";
+import ProjectMap from "@/components/citizen/ProjectMap";
+import { motion, AnimatePresence } from "framer-motion";
 
 function BeforeAfterSlider({ before, after }: { before: string; after: string }) {
     const [sliderPosition, setSliderPosition] = useState(50);
@@ -42,20 +44,19 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
                 <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">BEFORE</div>
             </div>
 
-            <div className="absolute inset-0 h-full overflow-hidden border-r-2 border-white shadow-xl z-10" style={{ width: `${sliderPosition}%` }}>
+            <div 
+                className="absolute inset-0 h-full z-10" 
+                style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+            >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    alt="After"
-                    className="absolute top-0 left-0 max-w-none h-full object-cover"
-                    style={{ width: containerRef.current ? containerRef.current.offsetWidth : "100%" }}
-                    src={after}
-                />
+                <img alt="After" className="w-full h-full object-cover" src={after} />
                 <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">AFTER</div>
             </div>
 
-            {/* Handle */}
-            <div className="absolute top-0 bottom-0 z-20 flex items-center justify-center" style={{ left: `${sliderPosition}%`, transform: "translateX(-50%)" }}>
-                <div className="size-10 rounded-full bg-white shadow-xl border-2 border-stone-200 flex items-center justify-center">
+            {/* Handle Line & Button */}
+            <div className="absolute top-0 bottom-0 z-20 flex flex-col items-center" style={{ left: `${sliderPosition}%`, transform: "translateX(-50%)" }}>
+                <div className="w-0.5 h-full bg-white shadow-[0_0_5px_rgba(0,0,0,0.5)] absolute" />
+                <div className="size-10 rounded-full bg-white shadow-xl border-2 border-stone-200 flex items-center justify-center relative top-1/2 -translate-y-1/2">
                     <span className="material-symbols-outlined text-stone-500 text-lg">drag_indicator</span>
                 </div>
             </div>
@@ -68,6 +69,8 @@ export default function AreaUpdatesPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("All");
     const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
+    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+    const projectRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
     useEffect(() => {
         getInfrastructureProjects().then(data => {
@@ -98,8 +101,29 @@ export default function AreaUpdatesPage() {
         return `${days} days ago`;
     };
 
+    const handleProjectSelect = (project: InfrastructureProject) => {
+        setFilter("All");
+        setSelectedProjectId(project.id);
+        projectRefs.current[project.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
     return (
         <div className="p-5 md:p-0 space-y-6">
+            {/* Map Integration */}
+            {!loading && (
+                <div className="animate-fade-up">
+                    <h3 className="font-display font-bold text-slate-800 mb-3 px-1 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">map</span>
+                        Area Progress Map
+                    </h3>
+                    <ProjectMap 
+                        projects={updates} 
+                        onProjectSelect={handleProjectSelect}
+                        selectedId={selectedProjectId}
+                    />
+                </div>
+            )}
+
             {/* Stats */}
             {!loading && (
                 <div className="grid grid-cols-3 gap-3">
@@ -143,7 +167,11 @@ export default function AreaUpdatesPage() {
             {!loading && (
                 <div className="space-y-6">
                     {filtered.map((update, i) => (
-                        <div key={update.id} className={`bg-white rounded-xl border border-stone-100 shadow-sm overflow-hidden animate-fade-up stagger-${(i % 4) + 1}`}>
+                        <div 
+                            key={update.id} 
+                            ref={el => { projectRefs.current[update.id] = el; }}
+                            className={`bg-white rounded-3xl border ${selectedProjectId === update.id ? 'border-primary ring-4 ring-primary/5' : 'border-slate-100'} shadow-sm overflow-hidden animate-fade-up transition-all duration-500`}
+                        >
                             {/* Before/After slider if images exist */}
                             {update.before_image_url && update.after_image_url && (
                                 <BeforeAfterSlider before={update.before_image_url} after={update.after_image_url} />

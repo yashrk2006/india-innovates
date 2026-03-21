@@ -11,10 +11,10 @@ export default function VoterCard() {
                 <div className="relative z-10 flex flex-col h-full justify-between gap-6">
                     <div className="flex justify-between items-start">
                         <div>
-                            <Link href="/citizen/verify" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-semibold tracking-wide mb-3 hover:bg-white/30 transition-colors">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-semibold tracking-wide mb-3">
                                 <span className="material-symbols-outlined text-[14px]">verified</span>
                                 VERIFIED VOTER
-                            </Link>
+                            </div>
                             <h2 className="font-display text-3xl font-bold leading-tight mb-1">Namaste,<br />Rajesh Kumar</h2>
                             <p className="text-emerald-100 text-sm opacity-90">EPIC No: UP/65/291/001234</p>
                         </div>

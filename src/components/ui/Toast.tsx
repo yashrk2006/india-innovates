@@ -25,10 +25,10 @@ const icons: Record<ToastType, string> = {
     warning: "warning",
 };
 const colors: Record<ToastType, string> = {
-    success: "#4ade80",
-    error: "#f87171",
-    info: "#60a5fa",
-    warning: "#fbbf24",
+    success: "#10b981",
+    error: "#ef4444",
+    info: "#3b82f6",
+    warning: "#f59e0b",
 };
 
 let nextId = 0;
@@ -55,15 +55,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             exit={{ opacity: 0, x: 60, scale: 0.9 }}
                             className="pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl border"
                             style={{
-                                background: "#111520",
-                                borderColor: colors[t.type] + "30",
-                                boxShadow: `0 8px 32px ${colors[t.type]}15`,
+                                background: "#ffffff",
+                                borderColor: colors[t.type] + "40",
+                                boxShadow: `0 8px 32px rgba(30, 41, 59, 0.08)`,
                             }}
                         >
                             <span className="material-symbols-outlined" style={{ color: colors[t.type], fontSize: 18 }}>
                                 {icons[t.type]}
                             </span>
-                            <span className="text-[12px] text-white/80 font-medium max-w-[280px]">{t.message}</span>
+                            <span className="text-[12px] text-slate-700 font-medium max-w-[280px]">{t.message}</span>
                         </motion.div>
                     ))}
                 </AnimatePresence>

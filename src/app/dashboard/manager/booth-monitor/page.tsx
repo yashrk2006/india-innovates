@@ -18,7 +18,7 @@ const booths = [
     { id: "B-006", name: "Anganwadi Centre", ward: "Ward 16", address: "Daliganj", voters: 640, visited: 12, workers: 1, ev: 1, vvpat: 1, ramp: false, water: false, electricity: false, toilet: false, shade: false, status: "OFFLINE", issues: ["Power cut since 8 AM", "No water", "Single worker assigned"], lastUpdate: "09:15" },
 ];
 
-const statusColor: Record<string, string> = { ACTIVE: "#4ade80", STALLED: "#fbbf24", OFFLINE: "#f87171" };
+const statusColor: Record<string, string> = { ACTIVE: "#10b981", STALLED: "#f59e0b", OFFLINE: "#ef4444" };
 
 export default function BoothMonitorPage() {
     const [selectedBooth, setSelectedBooth] = useState<string | null>(null);
@@ -53,12 +53,12 @@ export default function BoothMonitorPage() {
     };
 
     return (
-        <ManagerPageLayout title="Booth Monitor" badge="📍 REAL-TIME" badgeColor="#4ade80">
+        <ManagerPageLayout title="Booth Monitor" badge="📍 REAL-TIME" badgeColor="#10b981">
             <div className="grid grid-cols-5 gap-3">
-                <MgrKPI icon="location_on" label="Total Booths" value={boothStats?.total?.toString() || String(booths.length)} sub="In district" color="#c9a84c" delay={0} />
-                <MgrKPI icon="check_circle" label="Active" value={boothStats?.active?.toString() || String(booths.filter(b => b.status === "ACTIVE").length)} sub="Operational" color="#4ade80" delay={0.05} />
-                <MgrKPI icon="pause_circle" label="Stalled" value={String(booths.filter(b => b.status === "STALLED").length)} sub="Need attention" color="#fbbf24" delay={0.1} />
-                <MgrKPI icon="error" label="Offline" value={boothStats?.offline?.toString() || String(booths.filter(b => b.status === "OFFLINE").length)} sub="Critical" color="#f87171" delay={0.15} />
+                <MgrKPI icon="location_on" label="Total Booths" value={boothStats?.total?.toString() || String(booths.length)} sub="In district" color="#1e293b" delay={0} />
+                <MgrKPI icon="check_circle" label="Active" value={boothStats?.active?.toString() || String(booths.filter(b => b.status === "ACTIVE").length)} sub="Operational" color="#10b981" delay={0.05} />
+                <MgrKPI icon="pause_circle" label="Stalled" value={String(booths.filter(b => b.status === "STALLED").length)} sub="Need attention" color="#f59e0b" delay={0.1} />
+                <MgrKPI icon="error" label="Offline" value={boothStats?.offline?.toString() || String(booths.filter(b => b.status === "OFFLINE").length)} sub="Critical" color="#ef4444" delay={0.15} />
                 <MgrKPI icon="accessible" label="PwD Ready" value={String(booths.filter(b => b.ramp).length)} sub={`of ${booths.length} booths`} color="#818cf8" delay={0.2} />
             </div>
 
@@ -66,17 +66,17 @@ export default function BoothMonitorPage() {
                 <div className="space-y-3">
                     <MgrCard>
                         <div className="p-3 flex items-center gap-2">
-                            <span className="text-[8px] font-mono text-white/15 tracking-widest mr-1">FILTER:</span>
+                            <span className="text-[8px] font-mono text-slate-500 tracking-widest mr-1">FILTER:</span>
                             {["ALL", "ACTIVE", "STALLED", "OFFLINE"].map(f => (
                                 <button key={f} onClick={() => setFilter(f)}
-                                    className={`text-[9px] font-mono px-2.5 py-1 rounded transition-all ${filter === f ? "bg-[#c9a84c]/15 text-[#c9a84c] border border-[#c9a84c]/25" : "text-white/20 hover:text-white/40"}`}>{f}</button>
+                                    className={`text-[9px] font-mono px-2.5 py-1 rounded transition-all ${filter === f ? "bg-[#1e293b]/15 text-[#1e293b] border border-[#1e293b]/25" : "text-slate-400 hover:text-slate-500"}`}>{f}</button>
                             ))}
                         </div>
                     </MgrCard>
 
                     {filtered.map((b, i) => (
                         <motion.div key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                            className={`bg-[#111520] rounded-xl border cursor-pointer transition-all ${selectedBooth === b.id ? "border-[#c9a84c]/40 ring-1 ring-[#c9a84c]/20" : "border-white/[0.06] hover:border-white/[0.1]"}`}
+                            className={`bg-white shadow-sm rounded-xl border cursor-pointer transition-all ${selectedBooth === b.id ? "border-[#1e293b]/40 ring-1 ring-[#1e293b]/20" : "border-slate-200 hover:border-slate-200"}`}
                             onClick={() => setSelectedBooth(selectedBooth === b.id ? null : b.id)}>
                             <div className="flex items-stretch">
                                 <div className="w-1.5 shrink-0 rounded-l-xl" style={{ background: statusColor[b.status] }} />
@@ -84,20 +84,20 @@ export default function BoothMonitorPage() {
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <div className="flex items-center gap-2 mb-0.5">
-                                                <span className="font-mono text-[12px] text-[#c9a84c] font-bold">{b.id}</span>
-                                                <span className="text-[12px] text-white/80 font-medium">{b.name}</span>
+                                                <span className="font-mono text-[12px] text-[#1e293b] font-bold">{b.id}</span>
+                                                <span className="text-[12px] text-slate-500 font-medium">{b.name}</span>
                                             </div>
-                                            <div className="flex gap-3 text-[9px] text-white/30">
+                                            <div className="flex gap-3 text-[9px] text-slate-500">
                                                 <span>📍 {b.ward}</span><span>{b.address}</span><span>🕐 {b.lastUpdate}</span>
                                             </div>
                                         </div>
                                         <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: statusColor[b.status], background: statusColor[b.status] + "12" }}>{b.status}</span>
                                     </div>
                                     <div className="flex gap-4 text-[9px] mt-2">
-                                        <span className="text-white/30">Voters: <span className="text-white/60 font-mono">{b.voters.toLocaleString()}</span></span>
-                                        <span className="text-white/30">Visited: <span className="text-[#c9a84c] font-mono">{b.visited}%</span></span>
-                                        <span className="text-white/30">Workers: <span className="text-white/60 font-mono">{b.workers}</span></span>
-                                        <span className="text-white/30">EVM: <span className="text-white/60 font-mono">{b.ev}</span></span>
+                                        <span className="text-slate-500">Voters: <span className="text-slate-500 font-mono">{b.voters.toLocaleString()}</span></span>
+                                        <span className="text-slate-500">Visited: <span className="text-[#1e293b] font-mono">{b.visited}%</span></span>
+                                        <span className="text-slate-500">Workers: <span className="text-slate-500 font-mono">{b.workers}</span></span>
+                                        <span className="text-slate-500">EVM: <span className="text-slate-500 font-mono">{b.ev}</span></span>
                                         {b.issues.length > 0 && <span className="text-red-400">⚠ {b.issues.length} issue{b.issues.length > 1 ? "s" : ""}</span>}
                                     </div>
                                 </div>
@@ -114,28 +114,28 @@ export default function BoothMonitorPage() {
                                 <MgrCard>
                                     <div className="p-5">
                                         <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[20px] font-bold text-[#c9a84c]" style={{ background: statusColor[selected.status] + "12", border: `1px solid ${statusColor[selected.status]}25` }}>{selected.id.slice(-3)}</div>
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[20px] font-bold text-[#1e293b]" style={{ background: statusColor[selected.status] + "12", border: `1px solid ${statusColor[selected.status]}25` }}>{selected.id.slice(-3)}</div>
                                             <div>
-                                                <h3 className="text-[15px] text-white/90 font-bold">{selected.name}</h3>
-                                                <p className="text-[9px] text-white/30">{selected.address}, {selected.ward}</p>
+                                                <h3 className="text-[15px] text-slate-500 font-bold">{selected.name}</h3>
+                                                <p className="text-[9px] text-slate-500">{selected.address}, {selected.ward}</p>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 mb-4">
                                             {[
-                                                { l: "Voters", v: selected.voters.toLocaleString(), c: "#c9a84c" },
-                                                { l: "Coverage", v: `${selected.visited}%`, c: selected.visited > 70 ? "#4ade80" : "#fbbf24" },
-                                                { l: "Workers", v: String(selected.workers), c: selected.workers > 2 ? "#4ade80" : "#f87171" },
+                                                { l: "Voters", v: selected.voters.toLocaleString(), c: "#1e293b" },
+                                                { l: "Coverage", v: `${selected.visited}%`, c: selected.visited > 70 ? "#10b981" : "#f59e0b" },
+                                                { l: "Workers", v: String(selected.workers), c: selected.workers > 2 ? "#10b981" : "#ef4444" },
                                                 { l: "Last Update", v: selected.lastUpdate, c: "#60a5fa" },
                                             ].map(d => (
-                                                <div key={d.l} className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                                                    <span className="text-[8px] text-white/25 block">{d.l}</span>
+                                                <div key={d.l} className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                                                    <span className="text-[8px] text-slate-400 block">{d.l}</span>
                                                     <span className="text-[16px] font-bold" style={{ color: d.c }}>{d.v}</span>
                                                 </div>
                                             ))}
                                         </div>
 
-                                        <div className="text-[8px] font-mono text-white/20 uppercase tracking-wider mb-2">Infrastructure Checklist</div>
+                                        <div className="text-[8px] font-mono text-slate-400 uppercase tracking-wider mb-2">Infrastructure Checklist</div>
                                         <div className="grid grid-cols-3 gap-1.5 mb-4">
                                             {[
                                                 { l: "Ramp", ok: selected.ramp }, { l: "Water", ok: selected.water }, { l: "Power", ok: selected.electricity },
@@ -151,21 +151,21 @@ export default function BoothMonitorPage() {
                                             <div className="mb-4">
                                                 <div className="text-[8px] font-mono text-red-400 uppercase tracking-wider mb-2">⚠ Issues ({selected.issues.length})</div>
                                                 {selected.issues.map((iss, idx) => (
-                                                    <div key={idx} className="text-[10px] text-white/50 py-1.5 px-3 rounded bg-red-500/5 border border-red-500/10 mb-1">• {iss}</div>
+                                                    <div key={idx} className="text-[10px] text-slate-500 py-1.5 px-3 rounded bg-red-500/5 border border-red-500/10 mb-1">• {iss}</div>
                                                 ))}
                                             </div>
                                         )}
 
                                         <div className="flex gap-2">
-                                            <button onClick={() => handleDispatchWorker(selected.id)} className="flex-1 text-[9px] font-mono py-2 rounded-lg bg-[#c9a84c]/12 text-[#c9a84c] border border-[#c9a84c]/25 hover:bg-[#c9a84c]/20 transition-all">DISPATCH WORKER</button>
-                                            <button onClick={() => handleViewHistory(selected.id)} className="flex-1 text-[9px] font-mono py-2 rounded-lg bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 transition-all">VIEW HISTORY</button>
+                                            <button onClick={() => handleDispatchWorker(selected.id)} className="flex-1 text-[9px] font-mono py-2 rounded-lg bg-[#1e293b]/12 text-[#1e293b] border border-[#1e293b]/25 hover:bg-[#1e293b]/20 transition-all">DISPATCH WORKER</button>
+                                            <button onClick={() => handleViewHistory(selected.id)} className="flex-1 text-[9px] font-mono py-2 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all">VIEW HISTORY</button>
                                         </div>
                                     </div>
                                 </MgrCard>
                             </motion.div>
                         ) : (
                             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                <MgrCard><div className="p-10 text-center"><Icon name="touch_app" size={32} className="text-white/10 mx-auto mb-2" /><p className="text-[11px] text-white/20">Select a booth for details</p></div></MgrCard>
+                                <MgrCard><div className="p-10 text-center"><Icon name="touch_app" size={32} className="text-slate-500 mx-auto mb-2" /><p className="text-[11px] text-slate-400">Select a booth for details</p></div></MgrCard>
                             </motion.div>
                         )}
                     </AnimatePresence>

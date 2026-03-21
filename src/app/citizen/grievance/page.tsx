@@ -3,14 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { getGrievances, createGrievance, uploadGrievancePhoto } from "@/lib/services";
 import type { Grievance } from "@/lib/types";
+import toast from "react-hot-toast";
 
 const categories = [
-    { id: "Roads", icon: "add_road", label: "Roads" },
-    { id: "Water", icon: "water_drop", label: "Water" },
-    { id: "Health", icon: "medical_services", label: "Health" },
-    { id: "Waste", icon: "delete", label: "Waste" },
-    { id: "Power", icon: "lightbulb", label: "Power" },
-    { id: "Other", icon: "more_horiz", label: "Other" },
+    { id: "road", icon: "add_road", label: "Roads" },
+    { id: "water", icon: "water_drop", label: "Water" },
+    { id: "healthcare", icon: "medical_services", label: "Health" },
+    { id: "sanitation", icon: "delete", label: "Waste" },
+    { id: "electricity", icon: "lightbulb", label: "Power" },
+    { id: "other", icon: "more_horiz", label: "Other" },
 ];
 
 const statusTimeline: Record<string, { steps: string[]; done: number }> = {
@@ -35,7 +36,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function GrievancePage() {
-    const [category, setCategory] = useState("Roads");
+    const [category, setCategory] = useState("road");
     const [description, setDescription] = useState("");
     const [location, setLocation] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -74,32 +75,49 @@ export default function GrievancePage() {
         if (!description.trim()) return;
         setSubmitting(true);
 
-        let photoUrl: string | undefined;
-        if (photoFile) {
-            const url = await uploadGrievancePhoto(photoFile);
-            if (url) photoUrl = url;
-        }
+        try {
+            console.log("Submitting grievance to Supabase...", { category, description, location });
+            let photoUrl: string | undefined;
+            if (photoFile) {
+                console.log("Uploading photo first...");
+                const url = await uploadGrievancePhoto(photoFile);
+                if (url) {
+                    photoUrl = url;
+                    console.log("Photo upload successful:", url);
+                } else {
+                    console.error("Photo upload failed");
+                }
+            }
 
-        const newGrievance = await createGrievance({
-            category,
-            description: description.trim(),
-            location: location.trim() || undefined,
-            photo_url: photoUrl,
-        });
+            const newGrievance = await createGrievance({
+                category,
+                description: description.trim(),
+                location: location.trim() || undefined,
+                photo_url: photoUrl,
+            });
 
-        setSubmitting(false);
+            if (newGrievance) {
+                console.log("Grievance created successfully:", newGrievance);
+                setGrievances(prev => [newGrievance, ...prev]);
+                setSubmitted(true);
+                toast.success("Grievance submitted successfully!");
+                setDescription("");
+                setLocation("");
+                setPhotoName("");
+                setPhotoFile(null);
+                setCategory("road");
 
-        if (newGrievance) {
-            setGrievances(prev => [newGrievance, ...prev]);
-            setSubmitted(true);
-            setDescription("");
-            setLocation("");
-            setPhotoName("");
-            setPhotoFile(null);
-            setCategory("Roads");
-
-            if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
-            successTimeoutRef.current = setTimeout(() => setSubmitted(false), 4000);
+                if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+                successTimeoutRef.current = setTimeout(() => setSubmitted(false), 4000);
+            } else {
+                console.error("Grievance submission failed: createGrievance returned null");
+                toast.error("Failed to submit grievance. Please try again.");
+            }
+        } catch (error) {
+            console.error("Unexpected error in handleSubmit:", error);
+            toast.error("An unexpected error occurred.");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -267,6 +285,7 @@ export default function GrievancePage() {
 
                     {/* Submit */}
                     <button
+                        type="button"
                         onClick={handleSubmit}
                         disabled={submitting || !description.trim()}
                         className="w-full py-3.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-red-600/20"

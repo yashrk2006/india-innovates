@@ -108,6 +108,8 @@ export interface InfrastructureProject {
     likes_count: number;
     comments_count: number;
     booth_number: number | null;
+    lat: number | null;
+    lng: number | null;
     created_at: string;
 }
 
@@ -132,5 +134,11 @@ export type UserRole =
     | 'govt_officer'
     | 'eci'
     | 'candidate'
-    | 'citizen';
+    | 'citizen'
+    | 'manager'
+    | 'booth-adhyaksh'
+    | 'panna-pramukh'
+    | 'eci-observer'
+    | 'data-analyst'
+    | 'party-command';
 

@@ -1,9 +1,11 @@
 "use strict";
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
+import { useSidebar } from "@/components/super-admin/SidebarContext";
 
 /* ── CONSTANTS & THEME TOKENS ─────────────────────────────────────────── */
 
@@ -54,7 +56,7 @@ const I = ({ n, s = 14, c = "currentColor", className = "" }: { n: string; s?: n
 };
 
 /* ── MINI SPARKLINE ─────────────────────────────────────────── */
-const Spark = ({ data, color = "#c9a84c", h = 32 }: { data: number[]; color?: string; h?: number }) => {
+const Spark = ({ data, color = "#1e293b", h = 32 }: { data: number[]; color?: string; h?: number }) => {
     const w = 80;
     const max = Math.max(...data);
     const min = Math.min(...data);
@@ -80,27 +82,27 @@ interface KPIProps {
     color?: string;
 }
 
-const KPI = ({ icon, label, value, sub, trend, spark, color = "#c9a84c" }: KPIProps) => {
+const KPI = ({ icon, label, value, sub, trend, spark, color = "#1e293b" }: KPIProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-surface-dark border border-white/5 rounded-md p-4 relative overflow-hidden flex-1 min-w-[140px]`}
+            className={`bg-white shadow-sm border border-white/5 rounded-md p-4 relative overflow-hidden flex-1 min-w-[140px]`}
         >
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-accent-gold to-transparent opacity-50" />
             <div className="flex justify-between items-start">
                 <div>
-                    <div className="font-mono text-[9px] tracking-widest text-white/50 uppercase mb-2">{label}</div>
-                    <div className="font-serif text-2xl font-bold text-white leading-none">{value}</div>
+                    <div className="font-mono text-[9px] tracking-widest text-slate-500 uppercase mb-2">{label}</div>
+                    <div className="font-serif text-2xl font-bold text-slate-900 leading-none">{value}</div>
                     {sub && (
                         <div className="flex items-center gap-1 mt-1.5">
-                            {trend && <I n={trend === "up" ? "trending_up" : "chevron_down"} s={10} c={trend === "up" ? "#4ade80" : "#f87171"} />}
-                            <span className={`font-mono text-[9px] ${trend === "up" ? "text-green-400" : trend === "down" ? "text-red-400" : "text-white/50"}`}>{sub}</span>
+                            {trend && <I n={trend === "up" ? "trending_up" : "chevron_down"} s={10} c={trend === "up" ? "#10b981" : "#ef4444"} />}
+                            <span className={`font-mono text-[9px] ${trend === "up" ? "text-green-400" : trend === "down" ? "text-red-400" : "text-slate-500"}`}>{sub}</span>
                         </div>
                     )}
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                    <div className="w-8 h-8 rounded bg-white/5 border border-white/10 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded bg-white/5 border border-slate-200 flex items-center justify-center">
                         <I n={icon} s={14} c={color} />
                     </div>
                     {spark && <Spark data={spark} color={color} />}
@@ -123,15 +125,15 @@ const Section = ({ title, children, action, icon }: SectionProps) => (
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="bg-surface-dark border border-white/5 rounded-md p-4"
+        className="bg-white shadow-sm border border-white/5 rounded-md p-4"
     >
         <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-                {icon && <I n={icon} s={13} c="#c9a84c" />}
-                <span className="font-mono text-[9px] tracking-[2.5px] uppercase text-accent-gold">{title}</span>
+                {icon && <I n={icon} s={13} c="#1e293b" />}
+                <span className="font-mono text-[9px] tracking-[2.5px] uppercase text-slate-800">{title}</span>
             </div>
             {action && (
-                <button className="px-2 py-1 bg-transparent border border-white/20 text-white/50 text-[10px] font-mono tracking-wider uppercase rounded hover:border-accent-gold hover:text-accent-gold transition-colors">
+                <button className="px-2 py-1 bg-transparent border border-slate-200 text-slate-500 text-[10px] font-mono tracking-wider uppercase rounded hover:border-slate-800 hover:text-slate-800 transition-colors">
                     {action}
                 </button>
             )}
@@ -159,9 +161,9 @@ const PageOverview = () => {
         <div className="flex flex-col gap-5">
             {/* KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <KPI icon="users" label="Active Users" value="1,284" sub="+43 today" trend="up" spark={[900, 950, 1000, 980, 1100, 1200, 1284]} color="#c9a84c" />
+                <KPI icon="users" label="Active Users" value="1,284" sub="+43 today" trend="up" spark={[900, 950, 1000, 980, 1100, 1200, 1284]} color="#1e293b" />
                 <KPI icon="zap" label="Live Campaigns" value="47" sub="8 states" spark={[30, 38, 42, 40, 45, 44, 47]} color="#f97316" />
-                <KPI icon="activity" label="Uptime" value="99.8%" sub="30-day avg" trend="up" spark={[99, 100, 99.5, 100, 99.8, 100, 99.8]} color="#4ade80" />
+                <KPI icon="activity" label="Uptime" value="99.8%" sub="30-day avg" trend="up" spark={[99, 100, 99.5, 100, 99.8, 100, 99.8]} color="#10b981" />
                 <KPI icon="alert" label="Critical Alerts" value="3" sub="Action required" trend="down" color="#ef4444" />
             </div>
 
@@ -174,10 +176,10 @@ const PageOverview = () => {
                                 <div key={i} className="flex gap-3 py-2 border-b border-white/5 items-start">
                                     <div className={`w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 ${e.risk === "high" ? "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]" : e.risk === "med" ? "bg-amber-500" : "bg-green-500"}`} />
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-mono text-[10px] text-accent-gold mb-0.5">{e.user}</div>
-                                        <div className="text-[11px] text-white/60 leading-tight">{e.action}</div>
+                                        <div className="font-mono text-[10px] text-slate-800 mb-0.5">{e.user}</div>
+                                        <div className="text-[11px] text-slate-600 leading-tight">{e.action}</div>
                                     </div>
-                                    <span className="font-mono text-[9px] text-white/40 flex-shrink-0">{e.time}</span>
+                                    <span className="font-mono text-[9px] text-slate-500 flex-shrink-0">{e.time}</span>
                                 </div>
                             ))}
                         </div>
@@ -192,7 +194,7 @@ const PageOverview = () => {
                                 <div key={i} className="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
                                     <div className="flex gap-2 items-center">
                                         <div className={`w-1.5 h-1.5 rounded-full ${s.status === "ok" ? "bg-green-500 shadow-[0_0_6px_rgba(74,222,128,0.5)]" : "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]"}`} />
-                                        <span className="font-mono text-[10px] text-white/60">{s.name}</span>
+                                        <span className="font-mono text-[10px] text-slate-600">{s.name}</span>
                                     </div>
                                     <span className={`font-mono text-[10px] ${s.status === "warn" ? "text-amber-500" : "text-green-500"}`}>{s.latency}</span>
                                 </div>
@@ -225,12 +227,20 @@ const PAGE_TITLES: Record<string, string> = {
 /* ══════════════════════════════════════════════════════════════
    MAIN APP SHELL
    ══════════════════════════════════════════════════════════════ */
-export default function SuperAdminPage() {
+function SuperAdminContent() {
     const router = useRouter();
-    const [page, setPage] = useState("dashboard");
-    const [collapsed, setCollapsed] = useState(false);
+    const searchParams = useSearchParams();
+    const pageFromUrl = searchParams.get("page");
+    const page = pageFromUrl && PAGE_TITLES[pageFromUrl] ? pageFromUrl : "dashboard";
+    const { isOpen, setIsOpen } = useSidebar();
     const [clock, setClock] = useState("");
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const handleLogout = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        document.cookie = "user_role=; path=/; max-age=0";
+        router.push("/auth/login?role=super-admin");
+    };
 
     useEffect(() => {
         setClock(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -239,97 +249,34 @@ export default function SuperAdminPage() {
     }, []);
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background-dark text-white font-sans selection:bg-accent-gold/20">
-            {/* ── SIDEBAR OVERLAY ── */}
-            {isMobileMenuOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                />
-            )}
-
-            {/* ── SIDEBAR ── */}
-            <motion.div
-                animate={{ width: collapsed ? 64 : 240 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className={`bg-surface-dark border-r border-white/10 flex flex-col flex-shrink-0 z-50 absolute md:relative h-full transform transition-transform duration-300 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
-            >
-                {/* Logo */}
-                <div className="p-5 border-b border-white/10 flex-shrink-0">
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCollapsed(!collapsed)}>
-                        <div className="w-8 h-8 rounded bg-accent-gold/10 border border-accent-gold flex items-center justify-center flex-shrink-0">
-                            <I n="globe" s={16} c="#c9a84c" />
-                        </div>
-                        {!collapsed && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
-                                <div className="font-serif text-lg font-bold text-accent-gold whitespace-nowrap">BoothIQ</div>
-                                <div className="px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 rounded text-[9px] font-mono font-bold text-red-400 tracking-wider">SUPER ADMIN</div>
-                            </motion.div>
-                        )}
-                    </div>
+        <>
+            {/* Header */}
+            <div className="h-16 border-b border-slate-200 bg-white shadow-sm/50 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                    <button className="md:hidden text-slate-900" onClick={() => setIsOpen(!isOpen)}>
+                        <I n="menu" s={24} />
+                    </button>
+                    <h1 className="font-serif text-lg font-bold text-slate-900 tracking-tight">{PAGE_TITLES[page]}</h1>
                 </div>
-
-                {/* Nav */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-6 custom-scrollbar">
-                    {NAV.map(({ section, items }) => (
-                        <div key={section}>
-                            {!collapsed && <div className="px-3 mb-2 font-mono text-[9px] tracking-[2px] uppercase text-white/30">{section}</div>}
-                            {items.map(item => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => { if ((item as any).href) { router.push((item as any).href); } else { setPage(item.id); } }}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all duration-200 group ${page === item.id ? "bg-accent-gold/10 text-accent-gold" : "text-white/50 hover:bg-white/5 hover:text-white"}`}
-                                    title={collapsed ? item.label : ""}
-                                >
-                                    <I n={item.icon} s={16} c="currentColor" />
-                                    {!collapsed && (
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex justify-between items-center text-[11px] font-medium tracking-wide">
-                                            <span>{item.label}</span>
-                                            {page === item.id && <I n="chevron_right" s={12} />}
-                                        </motion.div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-
-                {/* User Footer */}
-                {!collapsed && (
-                    <div className="p-4 border-t border-white/10 bg-black/20">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(74,222,128,0.5)]" />
-                            <span className="font-mono text-[9px] text-green-400">Systems Online</span>
-                        </div>
-                        <div className="font-mono text-[8px] text-white/30">v2.4.0 · STABLE</div>
-                    </div>
-                )}
-            </motion.div>
-
-            {/* ── MAIN CONTENT ── */}
-            <div className="flex-1 flex flex-col min-w-0 bg-background-dark relative">
-                <div className="absolute inset-0 bg-[radial-gradient(#c9a84c_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03] pointer-events-none" />
-
-                {/* Header */}
-                <div className="h-16 border-b border-white/10 bg-surface-dark/50 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
-                    <div className="flex items-center gap-3">
-                        <button className="md:hidden text-white" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                            <I n="menu" s={24} />
-                        </button>
-                        <h1 className="font-serif text-lg font-bold text-white tracking-tight">{PAGE_TITLES[page]}</h1>
-                    </div>
 
                     <div className="flex items-center gap-3 sm:gap-6">
-                        <span className="hidden md:block font-mono text-[11px] text-white/50 tracking-widest">{clock} IST</span>
+                        <span className="hidden md:block font-mono text-[11px] text-slate-500 tracking-widest">{clock} IST</span>
 
-                        <button className="relative w-8 h-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors">
+                        <button className="relative w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-white/5 transition-colors">
                             <I n="bell" s={16} c="#fff" />
                             <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500 border border-surface-dark" />
                         </button>
 
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 border border-white/20 flex items-center justify-center shadow-lg shadow-red-500/20">
-                            <span className="font-mono text-[10px] font-bold text-white">SA</span>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 border border-slate-200 flex items-center justify-center shadow-lg shadow-red-500/20">
+                            <span className="font-mono text-[10px] font-bold text-slate-900">SA</span>
                         </div>
+                        <button 
+                            onClick={handleLogout}
+                            className="text-slate-500 hover:text-red-400 transition-colors ml-2"
+                            title="Sign Out"
+                        >
+                            <I n="logout" s={18} />
+                        </button>
                     </div>
                 </div>
 
@@ -344,18 +291,25 @@ export default function SuperAdminPage() {
                             transition={{ duration: 0.2 }}
                         >
                             {page === "dashboard" ? <PageOverview /> : (
-                                <div className="flex flex-col items-center justify-center h-[60vh] text-center border border-dashed border-white/10 rounded-lg bg-white/5">
+                                <div className="flex flex-col items-center justify-center h-[60vh] text-center border border-dashed border-slate-200 rounded-lg bg-white/5">
                                     <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
                                         <I n="lock" s={24} c="#ffffff40" />
                                     </div>
-                                    <h3 className="font-serif text-xl text-white/80 mb-2">{PAGE_TITLES[page]}</h3>
-                                    <p className="font-mono text-xs text-white/40 max-w-sm">This module is currently locked or under maintenance. Please check back later.</p>
+                                    <h3 className="font-serif text-xl text-slate-700 mb-2">{PAGE_TITLES[page]}</h3>
+                                    <p className="font-mono text-xs text-slate-500 max-w-sm">This module is currently locked or under maintenance. Please check back later.</p>
                                 </div>
                             )}
                         </motion.div>
                     </AnimatePresence>
                 </div>
-            </div>
-        </div>
+        </>
+    );
+}
+
+export default function SuperAdminPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="w-8 h-8 rounded-full border-4 border-w-white/20 border-t-accent-gold animate-spin" /></div>}>
+            <SuperAdminContent />
+        </Suspense>
     );
 }

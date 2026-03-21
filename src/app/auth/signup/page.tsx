@@ -1,9 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { useState, Suspense } from "react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
+import toast from "react-hot-toast";
 
 /* ─── Icon helper ─── */
 function Icon({ name, className = "", size }: { name: string; className?: string; size?: number }) {
@@ -28,10 +30,103 @@ const roleLabels: Record<string, string> = {
 
 function SignUpForm() {
     const searchParams = useSearchParams();
-    const role = searchParams.get("role") || "manager";
+    const router = useRouter();
+    const role = searchParams.get("role") || "citizen";
+    const invitationToken = searchParams.get("invitation");
     const roleLabel = roleLabels[role] || "User";
 
     const [showPassword, setShowPassword] = useState(false);
+    
+    // Form state
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [password, setPassword] = useState("");
+    const [agreed, setAgreed] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    // Effect to pre-fill if verified
+    useEffect(() => {
+        const stored = localStorage.getItem("verified_voter");
+        if (stored && role === "citizen") {
+            const v = JSON.parse(stored);
+            const names = v.name.split(" ");
+            setFirstName(names[0] || "");
+            setLastName(names.slice(1).join(" ") || "");
+            setPhone(v.phone || "");
+            setEmail(v.phone ? `${v.phone}@citizen.local` : "");
+        }
+    }, [role]);
+
+    // Restricted roles check
+    const restrictedRoles = ["super-admin", "party-command", "mp", "manager", "eci-observer", "data-analyst"];
+    const isRestricted = restrictedRoles.includes(role);
+
+    const handleSignUp = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // --- AUTH BYPASS FOR DEMO ---
+        toast.success("Account created! Redirecting to login...");
+        router.push(`/auth/login?role=${role}&email=${email}`);
+        return;
+
+        if (!firstName || !lastName || !email || !password || !phone) {
+            toast.error("Please fill in all fields.");
+            return;
+        }
+
+        if (!agreed) {
+            toast.error("You must agree to the Terms of Service.");
+            return;
+        }
+
+        setLoading(true);
+        const supabase = createClient();
+        
+        try {
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        first_name: firstName,
+                        last_name: lastName,
+                        phone: phone,
+                        role: role
+                    }
+                }
+            });
+
+            if (authError) {
+                toast.error(authError.message);
+                setLoading(false);
+                return;
+            }
+
+            if (authData.user && role === "citizen") {
+                const storedVoter = localStorage.getItem("verified_voter");
+                if (storedVoter) {
+                    const voterData = JSON.parse(storedVoter);
+                    
+                    // Link to operational 'voters' table
+                    await supabase.from("voters").insert({
+                        profile_id: authData.user.id,
+                        eci_voter_id: voterData.id,
+                        is_key_voter: false,
+                        segment: "Neutral"
+                    });
+                }
+            }
+
+            toast.success("Account created! Please check your email for confirmation.");
+            router.push(`/auth/login?role=${role}&email=${email}`);
+            
+        } catch (err: any) {
+            toast.error(err.message || "An unexpected error occurred.");
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="bg-charcoal-light font-display antialiased h-screen overflow-hidden flex flex-col md:flex-row">
@@ -154,21 +249,49 @@ function SignUpForm() {
                         </div>
 
                         <h1 className="text-white text-3xl font-bold tracking-tight mt-4">
-                            Request Access
+                            {isRestricted ? "Access Restricted" : "Create Account"}
                         </h1>
                         <p className="text-white/50 text-sm mt-2">
-                            Create your account for intelligence platform access.
+                            {isRestricted 
+                                ? `The ${roleLabel} role is for authorized personnel only. Please contact HQ for invitation.` 
+                                : `Create your secure account for ${roleLabel} portal access.`}
                         </p>
                     </motion.div>
 
                     {/* Form */}
-                    <motion.form
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4, duration: 0.6 }}
-                        className="w-full space-y-4"
-                        onSubmit={(e) => e.preventDefault()}
-                    >
+                    {isRestricted ? (
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-8 text-center space-y-6"
+                        >
+                            <div className="w-16 h-16 bg-accent-red/10 text-accent-red rounded-full flex items-center justify-center mx-auto">
+                                <Icon name="lock" size={32} />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-white font-bold text-lg">Sign Up Disabled</h3>
+                                <p className="text-white/40 text-sm">
+                                    Login credentials for {roleLabel} are provided directly by the government or your system administrator. Public sign up is not permitted.
+                                </p>
+                            </div>
+                            <div className="pt-4 space-y-3">
+                                <Link 
+                                    href={`/auth/login?role=${role}`}
+                                    className="inline-flex items-center gap-2 text-primary font-bold hover:underline"
+                                >
+                                    <Icon name="login" size={18} />
+                                    Go to Login Page
+                                </Link>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.form
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4, duration: 0.6 }}
+                            className="w-full space-y-4"
+                            onSubmit={handleSignUp}
+                        >
                         {/* Name Row */}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
@@ -178,6 +301,8 @@ function SignUpForm() {
                                 <input
                                     type="text"
                                     placeholder="Rajesh"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
                                     className="w-full h-12 bg-[#1c1c24] border border-white/10 rounded-lg px-4 text-white text-sm placeholder-white/30 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 outline-none transition-all duration-300"
                                 />
                             </div>
@@ -188,6 +313,8 @@ function SignUpForm() {
                                 <input
                                     type="text"
                                     placeholder="Kumar"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
                                     className="w-full h-12 bg-[#1c1c24] border border-white/10 rounded-lg px-4 text-white text-sm placeholder-white/30 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 outline-none transition-all duration-300"
                                 />
                             </div>
@@ -202,6 +329,8 @@ function SignUpForm() {
                                 <input
                                     type="email"
                                     placeholder="rajesh@boothiq.in"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="w-full h-12 bg-[#1c1c24] border border-white/10 rounded-lg px-4 text-white text-sm placeholder-white/30 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 outline-none transition-all duration-300"
                                 />
                                 <Icon name="mail" size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20" />
@@ -220,6 +349,8 @@ function SignUpForm() {
                                 <input
                                     type="tel"
                                     placeholder="98765 43210"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
                                     className="flex-1 h-12 bg-[#1c1c24] border border-white/10 rounded-lg px-4 text-white text-sm placeholder-white/30 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 outline-none transition-all duration-300"
                                 />
                             </div>
@@ -234,6 +365,8 @@ function SignUpForm() {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Min. 8 characters"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     className="w-full h-12 bg-[#1c1c24] border border-white/10 rounded-lg px-4 text-white text-sm placeholder-white/30 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 outline-none transition-all duration-300"
                                 />
                                 <button
@@ -255,7 +388,12 @@ function SignUpForm() {
 
                         {/* Terms */}
                         <div className="flex items-start gap-3">
-                            <div className="w-4 h-4 mt-0.5 rounded border border-white/20 shrink-0 cursor-pointer hover:border-primary/50 transition-colors" />
+                            <div 
+                                onClick={() => setAgreed(!agreed)}
+                                className={`w-4 h-4 mt-0.5 rounded border shrink-0 cursor-pointer flex items-center justify-center transition-colors ${agreed ? 'bg-primary border-primary text-charcoal-dark' : 'border-white/20 hover:border-primary/50'}`}
+                            >
+                                {agreed && <Icon name="check" size={12} className="font-bold" />}
+                            </div>
                             <p className="text-white/40 text-xs leading-relaxed">
                                 I agree to the{" "}
                                 <span className="text-primary cursor-pointer hover:text-primary/80 transition-colors">Terms of Service</span>{" "}
@@ -268,12 +406,13 @@ function SignUpForm() {
                         {/* Submit */}
                         <motion.button
                             type="submit"
+                            disabled={loading}
                             whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(201,167,74,0.3)" }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full h-12 bg-primary hover:bg-primary/90 text-charcoal-dark font-bold rounded-lg text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(201,167,74,0.2)]"
+                            className="w-full h-12 bg-primary hover:bg-primary/90 disabled:opacity-70 text-charcoal-dark font-bold rounded-lg text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(201,167,74,0.2)]"
                         >
                             <Icon name="person_add" size={18} />
-                            Create Account
+                            {loading ? "Creating Account..." : "Create Account"}
                         </motion.button>
 
                         {/* Divider */}
@@ -294,6 +433,7 @@ function SignUpForm() {
                             Register with Aadhaar eKYC
                         </motion.button>
                     </motion.form>
+                    )}
 
                     {/* Login link */}
                     <motion.p

@@ -35,8 +35,8 @@ const wardData = [
     { name: "Ward 18", coverage: 71, voters: 2900 }, { name: "Ward 19", coverage: 42, voters: 2400 },
     { name: "Ward 20", coverage: 93, voters: 3400 }, { name: "Ward 22", coverage: 68, voters: 2700 },
 ];
-const statusColor: Record<string, string> = { ACTIVE: "#4ade80", STALLED: "#fbbf24", OFFLINE: "#f87171" };
-const typeColor: Record<string, string> = { success: "#4ade80", warning: "#fbbf24", alert: "#f87171", info: "#60a5fa" };
+const statusColor: Record<string, string> = { ACTIVE: "#10b981", STALLED: "#f59e0b", OFFLINE: "#ef4444" };
+const typeColor: Record<string, string> = { success: "#10b981", warning: "#f59e0b", alert: "#ef4444", info: "#64748b" };
 
 export default function ManagerDashboard() {
     const [boothFilter, setBoothFilter] = useState("ALL");
@@ -54,23 +54,23 @@ export default function ManagerDashboard() {
     };
 
     return (
-        <ManagerPageLayout title="District Operations Hub" badge="LIVE" badgeColor="#c9a84c"
+        <ManagerPageLayout title="District Operations Hub" badge="LIVE" badgeColor="#1e293b"
             actions={
                 <div className="flex gap-2">
-                    <select className="bg-[#111520] border border-[rgba(255,255,255,0.05)] rounded px-3 py-1.5 text-[#f0ece3]/65 font-mono text-[11px] outline-none">
+                    <select className="bg-white border border-slate-300 rounded px-3 py-1.5 text-slate-700 font-mono text-[11px] outline-none shadow-sm focus:border-slate-500">
                         <option>All Constituencies</option><option>Lucknow West</option><option>Lucknow East</option>
                     </select>
-                    <button onClick={handleSync} className="font-mono text-[10px] uppercase bg-[#e8761a] hover:bg-[#e8761a]/90 text-white px-4 py-1.5 rounded transition-all">Sync Data</button>
+                    <button onClick={handleSync} className="font-mono text-[10px] font-bold uppercase bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded transition-all shadow-sm">Sync Data</button>
                 </div>
             }
         >
             {/* KPI Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                <MgrKPI icon="check_circle" label="Mandals" value="8/8" sub="100% — On Track" color="#4ade80" delay={0} />
-                <MgrKPI icon="location_on" label="Total Booths" value={stats?.totalBooths?.toString() || "312"} sub={`${stats?.totalBooths ? stats.totalBooths - 23 : 289} Active`} color="#c9a84c" delay={0.05} />
-                <MgrKPI icon="group" label="Workers Active" value={stats?.totalWorkers?.toString() || "847"} sub={`${stats?.totalWorkers || 847}/890 — ${Math.round(((stats?.totalWorkers || 847) / 890) * 100)}%`} color="#c9a84c" delay={0.1} />
-                <MgrKPI icon="door_front" label="Doors Today" value={stats?.totalVoters ? `${(stats.totalVoters / 1000).toFixed(1)}K` : "4,200"} sub="↑ 12% vs Yesterday" color="#e8761a" delay={0.15} />
-                <MgrKPI icon="pending_actions" label="Pending Tasks" value={grievanceStats?.byStatus?.submitted?.toString() || "14"} sub={`${grievanceStats?.byStatus?.in_progress || 3} In Progress`} color="#fbbf24" delay={0.2} />
+                <MgrKPI icon="check_circle" label="Mandals" value="8/8" sub="100% — On Track" color="#10b981" delay={0} />
+                <MgrKPI icon="location_on" label="Total Booths" value={stats?.totalBooths?.toString() || "312"} sub={`${stats?.totalBooths ? stats.totalBooths - 23 : 289} Active`} color="#0f172a" delay={0.05} />
+                <MgrKPI icon="group" label="Workers Active" value={stats?.totalWorkers?.toString() || "847"} sub={`${stats?.totalWorkers || 847}/890 — ${Math.round(((stats?.totalWorkers || 847) / 890) * 100)}%`} color="#475569" delay={0.1} />
+                <MgrKPI icon="door_front" label="Doors Today" value={stats?.totalVoters ? `${(stats.totalVoters / 1000).toFixed(1)}K` : "4,200"} sub="↑ 12% vs Yesterday" color="#0f172a" delay={0.15} />
+                <MgrKPI icon="pending_actions" label="Pending Tasks" value={grievanceStats?.byStatus?.submitted?.toString() || "14"} sub={`${grievanceStats?.byStatus?.in_progress || 3} In Progress`} color="#f59e0b" delay={0.2} />
             </div>
 
             {/* Main Grid */}
@@ -81,25 +81,25 @@ export default function ManagerDashboard() {
                         <div className="flex gap-1.5">
                             {["ALL", "ACTIVE", "STALLED", "OFFLINE"].map(f => (
                                 <button key={f} onClick={() => setBoothFilter(f)}
-                                    className={`text-[8px] font-mono px-2 py-0.5 rounded transition-all ${boothFilter === f ? "bg-[#c9a84c]/15 text-[#c9a84c] border border-[#c9a84c]/25" : "text-white/20 hover:text-white/40"}`}>{f}</button>
+                                    className={`text-[8px] font-mono px-2 py-0.5 rounded transition-all ${boothFilter === f ? "bg-[#1e293b]/15 text-[#1e293b] border border-[#1e293b]/25" : "text-slate-400 hover:text-slate-500"}`}>{f}</button>
                             ))}
                         </div>
                     } />
                     <div className="overflow-x-auto custom-scrollbar">
                         <div className="min-w-[600px]">
-                            <div className="grid grid-cols-[70px_70px_50px_1fr_60px_45px_70px] gap-2 px-4 py-2 border-b border-white/[0.04] font-mono text-[8px] uppercase text-white/20 tracking-wider">
+                            <div className="grid grid-cols-[70px_70px_50px_1fr_60px_45px_70px] gap-2 px-4 py-2 border-b border-slate-100 font-mono text-[9px] font-bold uppercase text-slate-400 tracking-wider bg-slate-50/50">
                                 <span>Booth</span><span>Ward</span><span>Staff</span><span>Doors</span><span>Key</span><span>Err</span><span>Status</span>
                             </div>
                             {filteredBooths.map((b, i) => (
                                 <motion.div key={b.id} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                                    className={`grid grid-cols-[70px_70px_50px_1fr_60px_45px_70px] gap-2 px-4 py-2.5 border-b border-white/[0.02] hover:bg-white/[0.015] transition-colors cursor-pointer items-center ${i % 2 ? "bg-white/[0.01]" : ""}`}>
-                                    <span className="font-mono text-[11px] text-[#c9a84c]">{b.id}</span>
-                                    <span className="text-[10px] text-white/50">{b.ward}</span>
-                                    <span className="text-[10px] text-white/50">{b.workers}</span>
-                                    <div className="flex items-center gap-2"><MgrBar pct={b.doors} h={3} /><span className="font-mono text-[9px] text-white/30 w-7 text-right">{b.doors}%</span></div>
-                                    <div className="flex gap-0.5">{[...Array(Math.min(b.keyVoters, 5))].map((_, j) => <Icon key={j} name="star" size={9} className="text-[#c9a84c]" />)}{b.keyVoters === 0 && <span className="text-[9px] text-white/15">—</span>}</div>
-                                    <span className={`font-mono text-[10px] ${b.issues > 2 ? "text-red-400" : b.issues > 0 ? "text-yellow-400" : "text-white/15"}`}>{b.issues}</span>
-                                    <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded text-center" style={{ color: statusColor[b.status], background: statusColor[b.status] + "12", border: `1px solid ${statusColor[b.status]}25` }}>{b.status}</span>
+                                    className={`grid grid-cols-[70px_70px_50px_1fr_60px_45px_70px] gap-2 px-4 py-2.5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer items-center ${i % 2 ? "bg-slate-50/30" : ""}`}>
+                                    <span className="font-mono font-bold text-[11px] text-slate-900">{b.id}</span>
+                                    <span className="text-[10px] text-slate-500 font-medium">{b.ward}</span>
+                                    <span className="text-[10px] text-slate-600 font-medium">{b.workers}</span>
+                                    <div className="flex items-center gap-2"><MgrBar pct={b.doors} h={4} color="#0f172a" /><span className="font-mono font-bold text-[9px] text-slate-500 w-7 text-right">{b.doors}%</span></div>
+                                    <div className="flex gap-0.5">{[...Array(Math.min(b.keyVoters, 5))].map((_, j) => <Icon key={j} name="star" size={10} className="text-slate-800" />)}{b.keyVoters === 0 && <span className="text-[9px] text-slate-300">—</span>}</div>
+                                    <span className={`font-mono text-[10px] font-bold ${b.issues > 2 ? "text-red-500" : b.issues > 0 ? "text-amber-500" : "text-slate-300"}`}>{b.issues}</span>
+                                    <span className="font-mono font-bold text-[8px] uppercase px-1.5 py-0.5 rounded text-center" style={{ color: statusColor[b.status], background: statusColor[b.status] + "15", border: `1px solid ${statusColor[b.status]}30` }}>{b.status}</span>
                                 </motion.div>
                             ))}
                         </div>
@@ -116,22 +116,22 @@ export default function ManagerDashboard() {
                                 <div className="flex gap-1">
                                     <div className="w-12 flex flex-col gap-1 text-right pr-2">
                                         {["B-001", "B-004", "B-007", "B-010", "B-005"].map(b => (
-                                            <div key={b} className="h-5 flex items-center justify-end font-mono text-[8px] text-white/20">{b}</div>
+                                            <div key={b} className="h-5 flex items-center justify-end font-mono text-[9px] font-bold text-slate-500">{b}</div>
                                         ))}
                                     </div>
                                     <div className="flex-1 grid grid-cols-12 gap-1">
                                         {["8", "9", "10", "11", "12", "1", "2", "3", "4", "5", "6", "7"].map(h => (
-                                            <div key={h} className="text-center font-mono text-[7px] text-white/15 mb-1">{h}</div>
+                                            <div key={h} className="text-center font-mono text-[8px] font-bold text-slate-400 mb-1">{h}</div>
                                         ))}
                                         {[[.2, .4, .7, .9, 1, .8, .9, 1, .7, .5, .3, .1], [.3, .6, .8, 1, .9, .8, 1, .9, .8, .6, .4, .2], [.2, .5, .7, .8, .9, .7, .8, .9, .7, .5, .3, .1], [.4, .7, .9, 1, 1, .9, 1, 1, .9, .7, .5, .3], [.1, .3, .5, .7, .6, .5, .6, .7, .6, .4, .2, .1]].map((row, ri) =>
-                                            row.map((v, ci) => <div key={`${ri}-${ci}`} className="h-5 rounded-sm" style={{ background: `rgba(201,168,76,${v * 0.75})` }} />)
+                                            row.map((v, ci) => <div key={`${ri}-${ci}`} className="h-5 rounded-sm" style={{ background: `rgba(15,23,42,${v * 0.85})` }} />)
                                         )}
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-end gap-1 mt-2">
-                                    <span className="font-mono text-[7px] text-white/15">Low</span>
-                                    {[.1, .3, .5, .7, .9].map(v => <div key={v} className="w-3 h-2 rounded-sm" style={{ background: `rgba(201,168,76,${v * 0.75})` }} />)}
-                                    <span className="font-mono text-[7px] text-white/15">High</span>
+                                    <span className="font-mono text-[8px] font-bold text-slate-400">Low</span>
+                                    {[.1, .3, .5, .7, .9].map(v => <div key={v} className="w-4 h-2.5 rounded-sm" style={{ background: `rgba(15,23,42,${v * 0.85})` }} />)}
+                                    <span className="font-mono text-[8px] font-bold text-slate-400">High</span>
                                 </div>
                             </div>
                         </div>
@@ -142,15 +142,15 @@ export default function ManagerDashboard() {
                         <MgrSection title="Today's Targets" icon="emoji_events" />
                         <div className="p-4 space-y-4">
                             {[
-                                { label: "Doors Knocked", value: "4,200", target: "6,000", pct: 70, color: "#c9a84c" },
-                                { label: "Voter Slips Verified", value: "2,890", target: "3,500", pct: 83, color: "#4ade80" },
-                                { label: "Issues Resolved", value: "32", target: "38", pct: 84, color: "#e8761a" },
-                                { label: "Scheme Enrollments", value: "156", target: "200", pct: 78, color: "#818cf8" },
+                                { label: "Doors Knocked", value: "4,200", target: "6,000", pct: 70, color: "#1e293b" },
+                                { label: "Voter Slips Verified", value: "2,890", target: "3,500", pct: 83, color: "#10b981" },
+                                { label: "Issues Resolved", value: "32", target: "38", pct: 84, color: "#f59e0b" },
+                                { label: "Scheme Enrollments", value: "156", target: "200", pct: 78, color: "#6366f1" },
                             ].map(item => (
                                 <div key={item.label}>
                                     <div className="flex justify-between mb-1.5">
-                                        <span className="font-mono text-[9px] text-white/35 uppercase tracking-wider">{item.label}</span>
-                                        <span className="font-mono text-[10px] text-white/50">{item.value} / <span className="text-white/20">{item.target}</span></span>
+                                        <span className="font-mono text-[9px] font-bold text-slate-500 uppercase tracking-wider">{item.label}</span>
+                                        <span className="font-mono text-[10px] font-bold text-slate-900">{item.value} <span className="text-slate-400">/ {item.target}</span></span>
                                     </div>
                                     <MgrBar pct={item.pct} color={item.color} h={5} />
                                 </div>
@@ -169,10 +169,10 @@ export default function ManagerDashboard() {
                         {wardData.map((w, i) => (
                             <motion.div key={w.name} initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.03 }}
                                 className="flex items-center gap-3">
-                                <span className="w-16 text-[10px] text-white/35 text-right font-mono">{w.name}</span>
-                                <div className="flex-1"><MgrBar pct={w.coverage} color={w.coverage > 80 ? "#4ade80" : w.coverage > 60 ? "#c9a84c" : "#fbbf24"} h={6} /></div>
-                                <span className={`font-mono text-[10px] w-8 text-right ${w.coverage > 80 ? "text-green-400" : w.coverage > 60 ? "text-[#c9a84c]" : "text-yellow-400"}`}>{w.coverage}%</span>
-                                <span className="font-mono text-[8px] text-white/15 w-12 text-right">{(w.voters / 1000).toFixed(1)}K</span>
+                                <span className="w-16 text-[11px] font-bold text-slate-600 text-right font-mono">{w.name}</span>
+                                <div className="flex-1"><MgrBar pct={w.coverage} color={w.coverage > 80 ? "#10b981" : w.coverage > 60 ? "#0f172a" : "#f59e0b"} h={6} /></div>
+                                <span className={`font-mono font-bold text-[10px] w-8 text-right ${w.coverage > 80 ? "text-emerald-600" : w.coverage > 60 ? "text-slate-800" : "text-amber-500"}`}>{w.coverage}%</span>
+                                <span className="font-mono font-bold text-[9px] text-slate-400 w-12 text-right">{(w.voters / 1000).toFixed(1)}K</span>
                             </motion.div>
                         ))}
                     </div>
@@ -181,19 +181,19 @@ export default function ManagerDashboard() {
                 {/* Live Worker Feed */}
                 <MgrCard delay={0.3}>
                     <MgrSection title="Live Field Reports" icon="description" action={
-                        <span className="flex items-center gap-1 text-[8px] font-mono text-green-400"><div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> LIVE</span>
+                        <span className="flex items-center gap-1.5 text-[9px] font-bold font-mono text-emerald-600"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> LIVE</span>
                     } />
-                    <div className="divide-y divide-white/[0.03]">
+                    <div className="divide-y divide-slate-100">
                         {workerReports.map((r, i) => (
                             <motion.div key={i} initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 + i * 0.04 }}
-                                className="px-4 py-3 hover:bg-white/[0.015] transition-colors cursor-pointer">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: typeColor[r.type] }} />
-                                    <span className="font-mono text-[9px] text-[#c9a84c]">[{r.time}]</span>
-                                    <span className="text-[11px] text-white/75 font-medium">{r.worker}</span>
-                                    <span className="font-mono text-[8px] text-white/20 bg-white/[0.03] px-1.5 py-0.5 rounded">{r.booth}</span>
+                                className="px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: typeColor[r.type] }} />
+                                    <span className="font-mono font-bold text-[10px] text-slate-400">[{r.time}]</span>
+                                    <span className="text-[12px] text-slate-900 font-bold">{r.worker}</span>
+                                    <span className="font-mono font-bold text-[9px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">{r.booth}</span>
                                 </div>
-                                <p className="text-[10px] text-white/40 pl-5">{r.note}</p>
+                                <p className="text-[11px] text-slate-600 font-medium pl-6">{r.note}</p>
                             </motion.div>
                         ))}
                     </div>

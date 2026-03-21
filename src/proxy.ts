@@ -1,50 +1,95 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export function proxy(request: NextRequest) {
-    const { pathname } = request.nextUrl;
+export async function proxy(request: NextRequest) {
+    let supabaseResponse = NextResponse.next({
+        request,
+    })
 
-    // Check for citizen verification token
-    const isCitizenVerified = request.cookies.get("citizen_token");
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll()
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                    supabaseResponse = NextResponse.next({
+                        request,
+                    })
+                    cookiesToSet.forEach(({ name, value, options }) =>
+                        supabaseResponse.cookies.set(name, value, options)
+                    )
+                },
+            },
+        }
+    )
 
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    const { pathname } = request.nextUrl
+    
+    // --- AUTH BYPASS FOR DEMO ---
+    return supabaseResponse;
+    
+    // Check for citizen verification token (Legacy cookie check)
+    const isCitizenVerified = request.cookies.get("citizen_token")
+    
     // Check for official role token
-    const userRole = request.cookies.get("user_role");
+    const userRole = request.cookies.get("user_role")
 
     // Citizen Routes Protection
     if (pathname.startsWith("/citizen")) {
         // Allow access to verification page without token
         if (pathname === "/citizen/verify") {
-            // But if already verified, redirect to home
             if (isCitizenVerified) {
-                return NextResponse.redirect(new URL("/citizen", request.url));
+                return NextResponse.redirect(new URL("/citizen", request.url))
             }
-            return NextResponse.next();
+            return supabaseResponse
         }
 
-        // For all other citizen routes, require verification
-        if (!isCitizenVerified && !userRole) {
-            return NextResponse.redirect(new URL("/citizen/verify", request.url));
+        // For all other citizen routes, require verification OR auth
+        if (!isCitizenVerified && !user && !userRole) {
+            return NextResponse.redirect(new URL("/citizen/verify", request.url))
         }
     }
 
     // Official Dashboard Protection
     if (pathname.startsWith("/dashboard")) {
-        if (!userRole) {
-            return NextResponse.redirect(new URL("/auth/login", request.url));
+        if (!user && !userRole) {
+            return NextResponse.redirect(new URL("/auth/login", request.url))
         }
 
         // Role-based routing for dashboard root
         if (pathname === "/dashboard") {
-            const role = userRole.value;
-            if (role === "super_admin" || role === "party_central") {
-                return NextResponse.redirect(new URL("/dashboard/super-admin", request.url));
-            } else {
-                return NextResponse.redirect(new URL("/dashboard/party-central", request.url));
+            const role = userRole?.value || (user?.user_metadata?.role as string)
+            if (role === "super_admin" || role === "party_central" || role === "super-admin") {
+                return NextResponse.redirect(new URL("/dashboard/super-admin", request.url))
+            } else if (role) {
+                // Map complex roles to dashboard sub-routes
+                const rolePath = role.replace(/_/g, '-');
+                return NextResponse.redirect(new URL(`/dashboard/${rolePath}`, request.url))
             }
         }
     }
+    
+    // Redirect logged in users away from auth
+    if (pathname.startsWith('/auth') && user) {
+        const role = user.user_metadata?.role || userRole?.value || 'citizen'
+        const url = request.nextUrl.clone()
+        if (role === 'citizen') {
+            url.pathname = '/citizen'
+        } else {
+            url.pathname = '/dashboard'
+        }
+        return NextResponse.redirect(url)
+    }
 
-    return NextResponse.next();
+    return supabaseResponse
 }
 
 export const config = {
@@ -55,8 +100,8 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - auth (login/signup pages)
+         * - *.svg, *.png, etc. (static assets)
          */
-        '/((?!api|_next/static|_next/image|favicon.ico|auth).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
-};
+}

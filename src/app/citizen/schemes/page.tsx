@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { getVoterSchemes, applyToScheme } from "@/lib/services";
-import type { VoterSchemeStatus } from "@/lib/types";
+import { getSchemes } from "@/lib/services/schemes";
+import type { VoterSchemeStatus, Scheme } from "@/lib/types";
 
 const filters = ["All", "eligible", "enrolled", "applied"];
 
@@ -23,10 +24,46 @@ export default function SchemesPage() {
     const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        getVoterSchemes().then((data) => {
-            setVoterSchemes(data);
-            setLoading(false);
-        });
+        const fetchAll = async () => {
+            try {
+                const [voterStats, allSchemes] = await Promise.all([
+                    getVoterSchemes(),
+                    getSchemes()
+                ]);
+
+                const statusMap = new Map(voterStats.map(vs => [vs.scheme_id, vs]));
+                
+                const merged: VoterSchemeStatus[] = allSchemes.map(scheme => {
+                    const existing = statusMap.get(scheme.id);
+                    if (existing) return existing;
+                    return {
+                        id: -scheme.id,
+                        voter_id: 0,
+                        scheme_id: scheme.id,
+                        status: "eligible" as const,
+                        created_at: scheme.created_at,
+                        scheme: scheme,
+                        outreach_sent: false
+                    } as VoterSchemeStatus;
+                });
+
+                // Sort so that outreach_sent (sent by manager) schemes appear first
+                const sorted = merged.sort((a, b) => {
+                    if (a.outreach_sent && !b.outreach_sent) return -1;
+                    if (!a.outreach_sent && b.outreach_sent) return 1;
+                    return 0;
+                });
+
+                setVoterSchemes(sorted);
+            } catch (error) {
+                console.error("Failed to load schemes:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAll();
+
         return () => {
             if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
         };
@@ -58,10 +95,10 @@ export default function SchemesPage() {
     };
 
     return (
-        <div className="p-5 md:p-0 space-y-6">
+        <div className="p-5 md:p-0 space-y-6" suppressHydrationWarning>
             {/* Search & Filter */}
-            <div className="space-y-4">
-                <div className="relative">
+            <div className="space-y-4" suppressHydrationWarning>
+                <div className="relative" suppressHydrationWarning>
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">search</span>
                     <input
                         type="text" placeholder="Search schemes..."
@@ -69,7 +106,7 @@ export default function SchemesPage() {
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                     />
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar" suppressHydrationWarning>
                     {filters.map(f => (
                         <button
                             key={f}
@@ -108,9 +145,17 @@ export default function SchemesPage() {
                                 <div
                                     key={vs.id}
                                     onClick={() => { setSelectedScheme(vs); setApplied(false); }}
-                                    className={`bg-white rounded-xl border border-stone-100 p-5 shadow-sm hover:shadow-md
-                                        transition-all cursor-pointer hover:-translate-y-0.5 animate-fade-up stagger-${(i % 4) + 1}`}
+                                    className={`bg-white rounded-xl border p-5 shadow-sm hover:shadow-md
+                                        transition-all cursor-pointer hover:-translate-y-0.5 animate-fade-up stagger-${(i % 4) + 1} ${
+                                            vs.outreach_sent ? "border-primary/30 ring-1 ring-primary/10" : "border-stone-100"
+                                        }`}
                                 >
+                                    {vs.outreach_sent && (
+                                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-primary uppercase tracking-widest mb-3 bg-primary/5 w-fit px-2 py-0.5 rounded-full">
+                                            <span className="material-symbols-outlined text-[12px]">campaign</span>
+                                            Recommended for You
+                                        </div>
+                                    )}
                                     <div className="flex items-start gap-4">
                                         <div className={`size-12 shrink-0 rounded-xl ${config.bg} ${config.text} flex items-center justify-center`}>
                                             <span className="material-symbols-outlined">{scheme.icon}</span>

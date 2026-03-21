@@ -4,6 +4,8 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
+import toast from "react-hot-toast";
 
 /* ──────────────────────────────────────────────────────────
    Icon helper – Material Symbols Outlined
@@ -127,44 +129,20 @@ function LoginForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const roleKey = searchParams.get("role") || "default";
+    const initialEmail = searchParams.get("email") || "";
     const config = roleConfig[roleKey] || roleConfig["default"];
 
-    const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-    const [phoneNumber, setPhoneNumber] = useState("");
+    const [email, setEmail] = useState(initialEmail);
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const handleOtpChange = (index: number, value: string) => {
-        if (isNaN(Number(value))) return;
-        const newOtp = [...otp];
-        newOtp[index] = value;
-        setOtp(newOtp);
-
-        // Auto-focus next input
-        if (value && index < 5) {
-            const nextInput = document.getElementById(`otp-${index + 1}`);
-            nextInput?.focus();
-        }
-    };
-
-    const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Backspace" && !otp[index] && index > 0) {
-            const prevInput = document.getElementById(`otp-${index - 1}`);
-            prevInput?.focus();
-        }
-    };
-
-    const handleLogin = () => {
-        // Simulate login & set cookie
-        document.cookie = `user_role=${roleKey}; path=/`;
-        if (roleKey === 'citizen') {
-            document.cookie = "citizen_token=true; path=/; max-age=86400";
-        }
-
-        // Intelligent Routing based on Role
+    const handleLogin = async (e: React.FormEvent | React.MouseEvent) => {
+        e.preventDefault();
+        
+        // --- AUTH BYPASS FOR DEMO ---
         const roleRoutes: Record<string, string> = {
-            "admin": "/dashboard/super-admin",
             "super-admin": "/dashboard/super-admin",
             "mp": "/dashboard/party-central",
-            "party": "/dashboard/party-central",
             "party-command": "/dashboard/party-central",
             "citizen": "/citizen",
             "manager": "/dashboard/manager",
@@ -173,7 +151,84 @@ function LoginForm() {
             "booth-adhyaksh": "/dashboard/booth-adhyaksh",
             "panna-pramukh": "/dashboard/panna-pramukh",
         };
+
+        toast.success(`Welcome back! Logging in as ${roleKey}...`);
+        document.cookie = `user_role=${roleKey}; path=/`;
+        if (roleKey === 'citizen') {
+            document.cookie = "is_citizen_verified=true; path=/; max-age=3600";
+        }
+        
         router.push(roleRoutes[roleKey] || "/dashboard/super-admin");
+        return;
+
+        if (!email || !password) {
+            toast.error("Please enter both email and password.");
+            return;
+        }
+
+        setLoading(true);
+        const supabase = createClient();
+        
+        try {
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (authError) {
+                toast.error(authError.message);
+                setLoading(false);
+                return;
+            }
+
+            // Fetch the user's role from the profiles table
+            const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", authData.user.id)
+                .single();
+
+            if (profileError || !profile) {
+                console.error("Error fetching profile:", profileError);
+                toast.error("Failed to fetch user profile. Please contact support.");
+                setLoading(false);
+                return;
+            }
+
+            const userRole = profile.role;
+
+            // Set role cookie for legacy simulated role-based routing
+            document.cookie = `user_role=${userRole}; path=/`;
+
+            // If citizen, also set verification cookie
+            if (userRole === 'citizen') {
+                document.cookie = "is_citizen_verified=true; path=/; max-age=3600";
+            }
+
+            toast.success("Login successful!");
+
+            // Intelligent Routing based on Role
+            const roleRoutes: Record<string, string> = {
+                "super_admin": "/dashboard/super-admin",
+                "super-admin": "/dashboard/super-admin",
+                "mp": "/dashboard/party-central",
+                "party_central": "/dashboard/party-central",
+                "party-command": "/dashboard/party-central",
+                "citizen": "/citizen",
+                "manager": "/dashboard/manager",
+                "data-analyst": "/dashboard/data-analyst",
+                "eci-observer": "/dashboard/eci-observer",
+                "eci": "/dashboard/eci-observer",
+                "booth-adhyaksh": "/dashboard/booth-adhyaksh",
+                "booth_worker": "/dashboard/booth-adhyaksh",
+                "panna-pramukh": "/dashboard/panna-pramukh",
+            };
+            
+            router.push(roleRoutes[userRole] || "/dashboard/super-admin");
+        } catch (err: any) {
+            toast.error(err.message || "An unexpected error occurred.");
+            setLoading(false);
+        }
     };
 
     return (
@@ -381,63 +436,47 @@ function LoginForm() {
                                         </p>
                                     </div>
 
-                                    {/* Aadhaar Input */}
+                                    {/* Email Input */}
                                     <div className="space-y-3 text-left">
-                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest pl-1">Aadhaar Number</label>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest pl-1">Email Address</label>
                                         <div className="relative">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                                                <Icon name="badge" size={24} />
+                                                <Icon name="mail" size={24} />
                                             </span>
                                             <input
-                                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#157f3c] focus:border-[#157f3c] text-xl tracking-[0.15em] font-bold text-slate-800 placeholder:tracking-normal placeholder:text-slate-400 transition-all outline-none"
-                                                placeholder="XXXX XXXX XXXX"
-                                                type="text"
-                                                maxLength={14}
-                                                value={phoneNumber}
-                                                onChange={(e) => {
-                                                    let val = e.target.value.replace(/\D/g, '');
-                                                    if (val.length > 12) val = val.slice(0, 12);
-                                                    const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
-                                                    setPhoneNumber(formatted);
-                                                }}
+                                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#157f3c] focus:border-[#157f3c] text-lg font-medium text-slate-800 placeholder:text-slate-400 transition-all outline-none"
+                                                placeholder="citizen@example.com"
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
                                             />
-                                            {phoneNumber.replace(/\s/g, '').length === 12 && (
-                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#157f3c]">
-                                                    <Icon name="check_circle" size={24} className="icon-filled" />
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
 
-                                    {/* OTP Section */}
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-end px-1">
-                                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest">Enter OTP</label>
-                                            <span className="text-xs text-orange-600 font-bold cursor-pointer hover:underline">Resend in 24s</span>
-                                        </div>
-                                        <p className="text-sm text-slate-500 text-left px-1">Sent to mobile ending in <span className="font-bold text-slate-900">****89</span></p>
-                                        <div className="flex gap-2 justify-between mt-1">
-                                            {otp.map((d, i) => (
-                                                <input
-                                                    key={i}
-                                                    id={`otp-${i}`}
-                                                    className={`w-12 h-14 text-center text-2xl font-bold bg-white border rounded-lg focus:outline-none focus:ring-0 transition-all text-slate-900 ${d ? 'border-[#157f3c] text-[#157f3c] ring-1 ring-[#157f3c] shadow-md' : 'border-slate-300'}`}
-                                                    maxLength={1}
-                                                    type="text"
-                                                    value={d}
-                                                    onKeyDown={(e) => handleKeyDown(i, e)}
-                                                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                                                />
-                                            ))}
+                                    {/* Password Input */}
+                                    <div className="space-y-3 text-left">
+                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest pl-1">Password</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                                <Icon name="lock" size={24} />
+                                            </span>
+                                            <input
+                                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#157f3c] focus:border-[#157f3c] text-lg font-medium text-slate-800 placeholder:text-slate-400 transition-all outline-none"
+                                                placeholder="••••••••"
+                                                type="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                            />
                                         </div>
                                     </div>
 
                                     {/* Action Button */}
                                     <button
                                         onClick={handleLogin}
-                                        className="w-full bg-[#198754] hover:bg-[#157f3c] text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-green-900/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+                                        disabled={loading}
+                                        className="w-full bg-[#198754] hover:bg-[#157f3c] disabled:opacity-70 text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-green-900/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
                                     >
-                                        <span>Verify & Proceed</span>
+                                        <span>{loading ? "Verifying..." : "Secure Login"}</span>
                                         <Icon name="arrow_forward" />
                                     </button>
 
@@ -474,69 +513,45 @@ function LoginForm() {
 
                             {/* Standard Form */}
                             <form className="space-y-8 mt-8" onSubmit={(e) => e.preventDefault()}>
-                                {/* Phone Input */}
+                                {/* Email/Password Inputs */}
                                 <div className="space-y-6">
                                     <div className="relative group">
-                                        <label className="text-white/40 text-xs absolute -top-5 left-0">Country Code</label>
-                                        <div className="flex items-end gap-3">
-                                            {/* Country Code */}
-                                            <div className="w-24 relative border-b border-white/20 pb-2">
-
-                                                <div className="flex items-center gap-2 text-white py-1">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img
-                                                        src="https://flagcdn.com/w40/in.png"
-                                                        alt="India"
-                                                        className="w-6 h-4 rounded-sm opacity-80 object-cover"
-                                                    />
-                                                    <span className="text-lg">+91</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Phone Field */}
-                                            <div className="relative w-full">
-                                                <input
-                                                    type="tel"
-                                                    id="mobile"
-                                                    className="block py-2.5 px-0 w-full text-lg text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 peer placeholder-transparent focus:border-accent-gold transition-colors"
-                                                    placeholder=" "
-                                                    title="10 digit mobile number"
-                                                    value={phoneNumber}
-                                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                                />
-                                                <label
-                                                    htmlFor="mobile"
-                                                    className="absolute text-lg text-white/40 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-accent-gold"
-                                                >
-                                                    Registered Mobile Number
-                                                </label>
-                                                {/* Animated bottom border */}
-                                                <div className="absolute bottom-0 left-0 h-0.5 bg-accent-gold w-0 peer-focus:w-full transition-all duration-300" />
-                                            </div>
+                                        <div className="relative w-full">
+                                            <input
+                                                type="email"
+                                                id="email"
+                                                className="block py-2.5 px-0 w-full text-lg text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 peer placeholder-transparent focus:border-accent-gold transition-colors"
+                                                placeholder=" "
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                            />
+                                            <label
+                                                htmlFor="email"
+                                                className="absolute text-lg text-white/40 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-accent-gold"
+                                            >
+                                                Email Address
+                                            </label>
+                                            <div className="absolute bottom-0 left-0 h-0.5 bg-accent-gold w-0 peer-focus:w-full transition-all duration-300" />
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* OTP Input */}
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-sm font-medium text-white/60">One-Time Password</label>
-                                        <button type="button" className="text-xs text-primary hover:text-accent-gold transition-colors font-medium">Resend OTP</button>
-                                    </div>
-                                    <div className="flex gap-2 sm:gap-4 justify-between">
-                                        {otp.map((digit, index) => (
+                                    <div className="relative group mt-6">
+                                        <div className="relative w-full">
                                             <input
-                                                key={index}
-                                                id={`otp-${index}`}
-                                                type="text"
-                                                maxLength={1}
-                                                value={digit}
-                                                onKeyDown={(e) => handleKeyDown(index, e)}
-                                                onChange={(e) => handleOtpChange(index, e.target.value)}
-                                                className="w-10 sm:w-12 h-12 sm:h-14 text-center text-xl bg-surface-dark border border-white/10 rounded focus:border-accent-gold focus:ring-1 focus:ring-accent-gold text-white transition-all outline-none"
-                                                placeholder="•"
+                                                type="password"
+                                                id="password"
+                                                className="block py-2.5 px-0 w-full text-lg text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 peer placeholder-transparent focus:border-accent-gold transition-colors"
+                                                placeholder=" "
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
                                             />
-                                        ))}
+                                            <label
+                                                htmlFor="password"
+                                                className="absolute text-lg text-white/40 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-accent-gold"
+                                            >
+                                                Password
+                                            </label>
+                                            <div className="absolute bottom-0 left-0 h-0.5 bg-accent-gold w-0 peer-focus:w-full transition-all duration-300" />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -546,8 +561,8 @@ function LoginForm() {
                                         <Icon name="fingerprint" size={18} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-xs text-white/80 font-medium">Biometric Verification</p>
-                                        <p className="text-[10px] text-white/40">Step 2 of 3 • Aadhaar Linked</p>
+                                        <p className="text-xs text-white/80 font-medium">Email Verification</p>
+                                        <p className="text-[10px] text-white/40">Secured via Supabase Auth</p>
                                     </div>
                                     <Icon name="check_circle" className="text-white/20" size={20} />
                                 </div>
@@ -557,18 +572,27 @@ function LoginForm() {
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleLogin}
-                                    className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-md text-sm font-semibold text-white bg-primary hover:bg-[#d66a15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background-dark transition-all duration-300 overflow-hidden shadow-lg shadow-primary/20"
+                                    disabled={loading}
+                                    className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-md text-sm font-semibold text-white bg-primary hover:bg-[#d66a15] disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background-dark transition-all duration-300 overflow-hidden shadow-lg shadow-primary/20"
                                 >
                                     <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                                         <Icon name="lock_open" className="h-5 w-5 text-white/60 group-hover:text-white transition-colors" />
                                     </span>
-                                    Verify & Access Dashboard
+                                    {loading ? "Verifying..." : "Verify & Access Dashboard"}
                                     <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-10" />
                                 </motion.button>
                             </form>
 
                             {/* Footer */}
                             <div className="text-center pt-4">
+                                {!["super-admin", "super_admin", "party-command", "mp", "manager", "data-analyst", "eci-observer"].includes(roleKey) && (
+                                    <p className="text-sm text-white/30 mb-2">
+                                        Don't have an account?{" "}
+                                        <Link href={`/auth/signup?role=${roleKey}`} className="font-medium text-accent-gold hover:text-white transition-colors">
+                                            Sign Up
+                                        </Link>
+                                    </p>
+                                )}
                                 <p className="text-sm text-white/30">
                                     Not an elected official?{" "}
                                     <Link href="/auth?role=admin" className="font-medium text-accent-gold hover:text-white transition-colors">

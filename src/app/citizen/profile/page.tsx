@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getVoterProfile } from "@/lib/services";
 import type { Voter } from "@/lib/types";
+import { createClient } from "@/utils/supabase/client";
 import VoterCard from "@/components/citizen/VoterCard";
 
 const badges = [
@@ -43,10 +44,12 @@ export default function ProfilePage() {
         });
     }, []);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
         document.cookie = "citizen_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
         document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-        router.push("/auth?role=citizen");
+        router.push("/auth/login?role=citizen");
     };
 
     if (loading) {

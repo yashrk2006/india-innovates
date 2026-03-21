@@ -99,10 +99,10 @@ const violations = [
     },
 ];
 
-const severityColor: Record<string, string> = { CRITICAL: "#f87171", HIGH: "#fbbf24", MEDIUM: "#60a5fa", LOW: "#6b7280" };
+const severityColor: Record<string, string> = { CRITICAL: "#ef4444", HIGH: "#f59e0b", MEDIUM: "#60a5fa", LOW: "#6b7280" };
 const statusColor: Record<string, string> = {
-    INVESTIGATING: "#60a5fa", "FIR FILED": "#f87171", SEIZED: "#fbbf24",
-    NEUTRALIZED: "#4ade80", CONFIRMED: "#f87171", "WARNING SENT": "#fbbf24", RESOLVED: "#4ade80"
+    INVESTIGATING: "#60a5fa", "FIR FILED": "#ef4444", SEIZED: "#f59e0b",
+    NEUTRALIZED: "#10b981", CONFIRMED: "#ef4444", "WARNING SENT": "#f59e0b", RESOLVED: "#10b981"
 };
 
 const escalationChain = [
@@ -122,12 +122,12 @@ export default function ViolationTrackerPage() {
     const filtered = severityFilter === "ALL" ? violations : violations.filter(v => v.severity === severityFilter);
 
     return (
-        <ECIPageLayout title="Violation Tracker" badge={`🚨 ${violations.length} ACTIVE VIOLATIONS`} badgeColor="#f87171">
+        <ECIPageLayout title="Violation Tracker" badge={`🚨 ${violations.length} ACTIVE VIOLATIONS`} badgeColor="#ef4444">
             <div className="grid grid-cols-6 gap-3 mb-6">
-                <ECIKPI icon="report" label="Total" value={String(violations.length)} sub="Today" color="#f87171" delay={0} />
-                <ECIKPI icon="error" label="Critical" value={String(violations.filter(v => v.severity === "CRITICAL").length)} sub="Immediate" color="#f87171" delay={0.05} />
-                <ECIKPI icon="description" label="FIRs Filed" value={String(violations.filter(v => v.fir).length)} sub="With police" color="#fbbf24" delay={0.1} />
-                <ECIKPI icon="currency_rupee" label="Cash Seized" value="₹12L" sub="1 seizure" color="#4ade80" delay={0.15} />
+                <ECIKPI icon="report" label="Total" value={String(violations.length)} sub="Today" color="#ef4444" delay={0} />
+                <ECIKPI icon="error" label="Critical" value={String(violations.filter(v => v.severity === "CRITICAL").length)} sub="Immediate" color="#ef4444" delay={0.05} />
+                <ECIKPI icon="description" label="FIRs Filed" value={String(violations.filter(v => v.fir).length)} sub="With police" color="#f59e0b" delay={0.1} />
+                <ECIKPI icon="currency_rupee" label="Cash Seized" value="₹12L" sub="1 seizure" color="#10b981" delay={0.15} />
                 <ECIKPI icon="groups" label="Arrested" value="17" sub="2 incidents" color="#818cf8" delay={0.2} />
                 <ECIKPI icon="timer" label="Avg Response" value="8 min" sub="Below 15 min SLA" color="#60a5fa" delay={0.25} />
             </div>
@@ -137,10 +137,10 @@ export default function ViolationTrackerPage() {
                     {/* Filters */}
                     <ECICard>
                         <div className="p-3 flex items-center gap-2">
-                            <span className="text-[8px] font-mono text-white/20 tracking-widest uppercase mr-1">SEVERITY:</span>
+                            <span className="text-[8px] font-mono text-slate-400 tracking-widest uppercase mr-1">SEVERITY:</span>
                             {["ALL", "CRITICAL", "HIGH", "MEDIUM"].map(s => (
                                 <button key={s} onClick={() => setSeverityFilter(s)}
-                                    className={`text-[9px] font-mono px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${severityFilter === s ? "bg-red-500/15 text-red-400 border border-red-500/25" : "text-white/25 border border-transparent hover:text-white/50"}`}
+                                    className={`text-[9px] font-mono px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${severityFilter === s ? "bg-red-500/15 text-red-400 border border-red-500/25" : "text-slate-400 border border-transparent hover:text-slate-500"}`}
                                 >
                                     {s !== "ALL" && <div className="w-1.5 h-1.5 rounded-full" style={{ background: severityColor[s] }} />}
                                     {s}
@@ -159,7 +159,7 @@ export default function ViolationTrackerPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ delay: i * 0.04 }}
-                                className="bg-[#0d1018] rounded-xl border border-white/[0.06] overflow-hidden hover:border-red-500/12 transition-all duration-200"
+                                className="bg-[#0d1018] rounded-xl border border-slate-200 overflow-hidden hover:border-red-500/12 transition-all duration-200"
                             >
                                 {/* Header */}
                                 <div className="flex items-stretch cursor-pointer" onClick={() => setExpandedId(expandedId === v.id ? null : v.id)}>
@@ -168,10 +168,10 @@ export default function ViolationTrackerPage() {
                                         <div className="flex items-start justify-between mb-2">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <h4 className="text-[13px] text-white/90 font-semibold">{v.type}</h4>
-                                                    <span className="text-[8px] font-mono text-white/20">{v.id}</span>
+                                                    <h4 className="text-[13px] text-slate-500 font-semibold">{v.type}</h4>
+                                                    <span className="text-[8px] font-mono text-slate-400">{v.id}</span>
                                                 </div>
-                                                <div className="flex items-center gap-3 text-[9px] text-white/35">
+                                                <div className="flex items-center gap-3 text-[9px] text-slate-500">
                                                     <span>📍 {v.location}</span>
                                                     <span>🕐 {v.reported}</span>
                                                     <span>👤 {v.reporter} ({v.reporterDesig})</span>
@@ -181,7 +181,7 @@ export default function ViolationTrackerPage() {
                                                 <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: severityColor[v.severity], background: severityColor[v.severity] + "12" }}>{v.severity}</span>
                                                 <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: statusColor[v.status], background: statusColor[v.status] + "12" }}>{v.status}</span>
                                                 {v.fir && <span className="text-[7px] font-mono px-1.5 py-0.5 rounded bg-red-500/10 text-red-400">FIR</span>}
-                                                <Icon name={expandedId === v.id ? "expand_less" : "expand_more"} size={16} className="text-white/20" />
+                                                <Icon name={expandedId === v.id ? "expand_less" : "expand_more"} size={16} className="text-slate-400" />
                                             </div>
                                         </div>
                                     </div>
@@ -191,15 +191,15 @@ export default function ViolationTrackerPage() {
                                 <AnimatePresence>
                                     {expandedId === v.id && (
                                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
-                                            <div className="border-t border-white/[0.04] px-5 py-4 bg-white/[0.01] ml-1.5">
-                                                <p className="text-[11px] text-white/60 leading-relaxed mb-3">{v.description}</p>
+                                            <div className="border-t border-slate-200 px-5 py-4 bg-white/[0.01] ml-1.5">
+                                                <p className="text-[11px] text-slate-600 leading-relaxed mb-3">{v.description}</p>
 
                                                 {/* Evidence */}
                                                 <div className="mb-3">
-                                                    <span className="text-[9px] font-mono text-white/25 uppercase tracking-wider">Evidence Attached:</span>
+                                                    <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">Evidence Attached:</span>
                                                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                                                         {v.evidence.map((e, idx) => (
-                                                            <span key={idx} className="text-[9px] bg-white/5 text-white/50 px-2 py-1 rounded-md font-mono border border-white/[0.06] hover:bg-white/10 cursor-pointer transition-colors">
+                                                            <span key={idx} className="text-[9px] bg-white/5 text-slate-500 px-2 py-1 rounded-md font-mono border border-slate-200 hover:bg-white/10 cursor-pointer transition-colors">
                                                                 📎 {e}
                                                             </span>
                                                         ))}
@@ -208,8 +208,8 @@ export default function ViolationTrackerPage() {
 
                                                 {/* Assignment + FIR */}
                                                 <div className="flex gap-4 mb-3 text-[9px]">
-                                                    <span className="text-white/30">Assigned: <span className="text-white/60 font-medium">{v.assignedTo}</span></span>
-                                                    {v.fir && <span className="text-white/30">FIR: <span className="text-red-400 font-medium">{v.fir}</span></span>}
+                                                    <span className="text-slate-500">Assigned: <span className="text-slate-600 font-medium">{v.assignedTo}</span></span>
+                                                    {v.fir && <span className="text-slate-500">FIR: <span className="text-red-400 font-medium">{v.fir}</span></span>}
                                                 </div>
 
                                                 {/* Timeline Toggle */}
@@ -235,9 +235,9 @@ export default function ViolationTrackerPage() {
                                                                         <div className="pb-3">
                                                                             <div className="flex items-center gap-2 mb-0.5">
                                                                                 <span className="text-[9px] font-mono text-red-400/60">{t.time}</span>
-                                                                                <span className="text-[8px] font-mono text-white/20 bg-white/5 px-1.5 py-0.5 rounded">{t.by}</span>
+                                                                                <span className="text-[8px] font-mono text-slate-400 bg-white/5 px-1.5 py-0.5 rounded">{t.by}</span>
                                                                             </div>
-                                                                            <p className="text-[10px] text-white/60">{t.action}</p>
+                                                                            <p className="text-[10px] text-slate-600">{t.action}</p>
                                                                         </div>
                                                                     </motion.div>
                                                                 ))}
@@ -247,10 +247,10 @@ export default function ViolationTrackerPage() {
                                                 </AnimatePresence>
 
                                                 {/* Actions */}
-                                                <div className="flex items-center gap-2 pt-2 border-t border-white/[0.04]">
+                                                <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
                                                     <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-red-500/12 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all">ESCALATE TO ECI</button>
-                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 transition-all">ADD EVIDENCE</button>
-                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 transition-all">FILE FIR</button>
+                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-slate-500 border border-slate-200 hover:bg-white/10 transition-all">ADD EVIDENCE</button>
+                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-slate-500 border border-slate-200 hover:bg-white/10 transition-all">FILE FIR</button>
                                                     <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-all ml-auto">MARK RESOLVED</button>
                                                 </div>
                                             </div>
@@ -281,8 +281,8 @@ export default function ViolationTrackerPage() {
                                         )}
                                     </div>
                                     <div className="pb-4">
-                                        <span className="text-[10px] text-white/70 font-medium">{e.role}</span>
-                                        <p className="text-[8px] text-white/25 font-mono">{e.desc}</p>
+                                        <span className="text-[10px] text-slate-600 font-medium">{e.role}</span>
+                                        <p className="text-[8px] text-slate-400 font-mono">{e.desc}</p>
                                     </div>
                                 </motion.div>
                             ))}
@@ -294,16 +294,16 @@ export default function ViolationTrackerPage() {
                         <ECISectionHeader title="Today's Summary" icon="summarize" />
                         <div className="p-4 space-y-2.5">
                             {[
-                                { label: "Total Violations", value: "6", color: "#f87171" },
-                                { label: "FIRs Registered", value: "4", color: "#fbbf24" },
-                                { label: "Cash Seized", value: "₹12,00,000", color: "#4ade80" },
+                                { label: "Total Violations", value: "6", color: "#ef4444" },
+                                { label: "FIRs Registered", value: "4", color: "#f59e0b" },
+                                { label: "Cash Seized", value: "₹12,00,000", color: "#10b981" },
                                 { label: "Arrests Made", value: "17", color: "#818cf8" },
                                 { label: "EVMs Replaced", value: "1", color: "#60a5fa" },
                                 { label: "Booths Affected", value: "5", color: "#f472b6" },
-                                { label: "Re-poll Pending", value: "1", color: "#f87171" },
+                                { label: "Re-poll Pending", value: "1", color: "#ef4444" },
                             ].map((s, i) => (
-                                <div key={s.label} className="flex justify-between items-center py-1.5 border-b border-white/[0.03]">
-                                    <span className="text-[10px] text-white/40">{s.label}</span>
+                                <div key={s.label} className="flex justify-between items-center py-1.5 border-b border-slate-200">
+                                    <span className="text-[10px] text-slate-500">{s.label}</span>
                                     <span className="text-[11px] font-mono font-semibold" style={{ color: s.color }}>{s.value}</span>
                                 </div>
                             ))}
@@ -315,13 +315,13 @@ export default function ViolationTrackerPage() {
                         <ECISectionHeader title="Quick Actions" icon="bolt" />
                         <div className="p-4 space-y-2">
                             {[
-                                { label: "New Violation Entry", icon: "add_circle", color: "#f87171" },
+                                { label: "New Violation Entry", icon: "add_circle", color: "#ef4444" },
                                 { label: "Generate MCC Report", icon: "summarize", color: "#60a5fa" },
-                                { label: "Notify ECI Delhi", icon: "send", color: "#fbbf24" },
+                                { label: "Notify ECI Delhi", icon: "send", color: "#f59e0b" },
                                 { label: "Request Re-poll", icon: "replay", color: "#f472b6" },
                             ].map((a, i) => (
                                 <motion.button key={a.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 + i * 0.05 }}
-                                    className="w-full flex items-center gap-2.5 p-2.5 rounded-lg text-[10px] font-medium text-white/50 bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:text-white/80 transition-all text-left"
+                                    className="w-full flex items-center gap-2.5 p-2.5 rounded-lg text-[10px] font-medium text-slate-500 bg-white/[0.02] border border-slate-200 hover:bg-white/[0.05] hover:text-slate-700 transition-all text-left"
                                 >
                                     <Icon name={a.icon} size={15} style={{ color: a.color }} />
                                     {a.label}

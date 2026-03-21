@@ -111,6 +111,12 @@ export default function AuthGateway() {
     const router = useRouter();
 
     const handleRoleSelect = (roleId: string) => {
+        if (roleId === "citizen") {
+            // --- AUTH BYPASS FOR DEMO ---
+            // router.push("/auth/verify-id");
+            router.push("/auth/login?role=citizen");
+            return;
+        }
         router.push(`/auth/login?role=${roleId}`);
     };
 

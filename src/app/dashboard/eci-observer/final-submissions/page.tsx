@@ -6,7 +6,7 @@ import ECIPageLayout, { ECICard, ECISectionHeader, ECIKPI } from "@/components/e
 function Icon({ name, size = 16, className = "", style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) {
     return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size, ...style }}>{name}</span>;
 }
-function Bar({ pct, color = "#f87171", h = 5 }: { pct: number; color?: string; h?: number }) {
+function Bar({ pct, color = "#ef4444", h = 5 }: { pct: number; color?: string; h?: number }) {
     return (
         <div className="bg-white/5 rounded-full overflow-hidden" style={{ height: h }}>
             <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1 }} className="rounded-full" style={{ background: color, height: h }} />
@@ -42,19 +42,19 @@ export default function FinalSubmissionsPage() {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     return (
-        <ECIPageLayout title="Final Submissions" badge="📁 ECI ARCHIVE" badgeColor="#4ade80">
+        <ECIPageLayout title="Final Submissions" badge="📁 ECI ARCHIVE" badgeColor="#10b981">
             <div className="grid grid-cols-5 gap-3 mb-6">
-                <ECIKPI icon="pending_actions" label="Pending" value={String(pending.length)} sub="In progress" color="#fbbf24" delay={0} />
-                <ECIKPI icon="task_alt" label="Accepted" value={String(completed.length)} sub="Filed with ECI" color="#4ade80" delay={0.06} />
+                <ECIKPI icon="pending_actions" label="Pending" value={String(pending.length)} sub="In progress" color="#f59e0b" delay={0} />
+                <ECIKPI icon="task_alt" label="Accepted" value={String(completed.length)} sub="Filed with ECI" color="#10b981" delay={0.06} />
                 <ECIKPI icon="receipt_long" label="Receipts" value={String(completed.length)} sub="ECI acknowledged" color="#60a5fa" delay={0.12} />
                 <ECIKPI icon="draw" label="Signed" value={String(completed.length)} sub="DSC verified" color="#818cf8" delay={0.18} />
-                <ECIKPI icon="timer" label="Next Due" value="Feb 22" sub="Lucknow report" color="#f87171" delay={0.24} />
+                <ECIKPI icon="timer" label="Next Due" value="Feb 22" sub="Lucknow report" color="#ef4444" delay={0.24} />
             </div>
 
             <div className="flex gap-2 mb-5">
                 {(["pending", "completed"] as const).map(t => (
                     <button key={t} onClick={() => setTab(t)}
-                        className={`text-[10px] font-mono px-4 py-2 rounded-lg capitalize flex items-center gap-1.5 transition-all ${tab === t ? "bg-red-500/15 text-red-400 border border-red-500/25" : "text-white/30 border border-white/[0.06] hover:text-white/60"}`}>
+                        className={`text-[10px] font-mono px-4 py-2 rounded-lg capitalize flex items-center gap-1.5 transition-all ${tab === t ? "bg-red-500/15 text-red-400 border border-red-500/25" : "text-slate-500 border border-slate-200 hover:text-slate-600"}`}>
                         <Icon name={t === "pending" ? "pending_actions" : "task_alt"} size={14} />
                         {t} ({t === "pending" ? pending.length : completed.length})
                     </button>
@@ -66,12 +66,12 @@ export default function FinalSubmissionsPage() {
                     <motion.div key="p" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
                         {pending.map((r, i) => (
                             <motion.div key={r.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                                className="bg-[#0d1018] rounded-xl border border-white/[0.06] overflow-hidden">
+                                className="bg-[#0d1018] rounded-xl border border-slate-200 overflow-hidden">
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
-                                            <h4 className="text-[14px] text-white/90 font-semibold mb-1">{r.title}</h4>
-                                            <div className="flex gap-3 text-[9px] text-white/30">
+                                            <h4 className="text-[14px] text-slate-500 font-semibold mb-1">{r.title}</h4>
+                                            <div className="flex gap-3 text-[9px] text-slate-500">
                                                 <span>{r.id}</span><span>📍{r.constituency}</span><span>⏰Due: {r.dueDate}</span><span>👤{r.assignee}</span>
                                             </div>
                                         </div>
@@ -79,22 +79,22 @@ export default function FinalSubmissionsPage() {
                                             <span className="text-[20px] font-bold text-fuchsia-400">{r.overall}%</span>
                                         </div>
                                     </div>
-                                    <Bar pct={r.overall} color="linear-gradient(to right, #f87171, #a855f7)" h={6} />
+                                    <Bar pct={r.overall} color="linear-gradient(to right, #ef4444, #a855f7)" h={6} />
                                     <div className="grid grid-cols-2 gap-2 mt-4">
                                         {r.sections.map((s, idx) => (
                                             <motion.div key={idx} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + idx * 0.03 }}
-                                                className={`p-3 rounded-lg border ${s.pct === 100 ? "bg-green-500/5 border-green-500/10" : s.pct === 0 ? "bg-red-500/5 border-red-500/10" : "bg-white/[0.02] border-white/[0.05]"}`}>
+                                                className={`p-3 rounded-lg border ${s.pct === 100 ? "bg-green-500/5 border-green-500/10" : s.pct === 0 ? "bg-red-500/5 border-red-500/10" : "bg-white/[0.02] border-slate-200"}`}>
                                                 <div className="flex justify-between items-center mb-1.5">
-                                                    <span className="text-[10px] text-white/60">{s.n}</span>
-                                                    <span className="text-[9px] font-mono font-medium" style={{ color: s.pct === 100 ? "#4ade80" : s.pct > 50 ? "#fbbf24" : "#f87171" }}>{s.pct}%</span>
+                                                    <span className="text-[10px] text-slate-600">{s.n}</span>
+                                                    <span className="text-[9px] font-mono font-medium" style={{ color: s.pct === 100 ? "#10b981" : s.pct > 50 ? "#f59e0b" : "#ef4444" }}>{s.pct}%</span>
                                                 </div>
-                                                <Bar pct={s.pct} color={s.pct === 100 ? "#4ade80" : s.pct > 50 ? "#fbbf24" : "#f87171"} h={3} />
+                                                <Bar pct={s.pct} color={s.pct === 100 ? "#10b981" : s.pct > 50 ? "#f59e0b" : "#ef4444"} h={3} />
                                             </motion.div>
                                         ))}
                                     </div>
-                                    <div className="flex gap-2 mt-4 pt-3 border-t border-white/[0.04]">
+                                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
                                         <button className="text-[9px] font-mono px-4 py-2 rounded-lg bg-red-500/12 text-red-400 border border-red-500/20 hover:bg-red-500/20 flex items-center gap-1 transition-all"><Icon name="edit" size={13} /> CONTINUE EDITING</button>
-                                        <button className="text-[9px] font-mono px-4 py-2 rounded-lg bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 flex items-center gap-1 transition-all"><Icon name="preview" size={13} /> PREVIEW PDF</button>
+                                        <button className="text-[9px] font-mono px-4 py-2 rounded-lg bg-white/5 text-slate-500 border border-slate-200 hover:bg-white/10 flex items-center gap-1 transition-all"><Icon name="preview" size={13} /> PREVIEW PDF</button>
                                         <button className="text-[9px] font-mono px-4 py-2 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 flex items-center gap-1 ml-auto transition-all"><Icon name="draw" size={13} /> SIGN & SUBMIT</button>
                                     </div>
                                 </div>
@@ -112,8 +112,8 @@ export default function FinalSubmissionsPage() {
                                         <Icon name="check_circle" size={20} className="text-green-400" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-[13px] text-white/85 font-semibold">{r.title}</h4>
-                                        <div className="flex items-center gap-3 text-[9px] text-white/30 mt-0.5">
+                                        <h4 className="text-[13px] text-slate-500 font-semibold">{r.title}</h4>
+                                        <div className="flex items-center gap-3 text-[9px] text-slate-500 mt-0.5">
                                             <span>{r.id}</span><span>📍{r.constituency}</span><span>📤{r.submitted}</span><span>✅{r.accepted}</span>
                                         </div>
                                     </div>
@@ -124,25 +124,25 @@ export default function FinalSubmissionsPage() {
                                 <AnimatePresence>
                                     {expandedId === r.id && (
                                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                            <div className="border-t border-white/[0.04] px-5 py-4 bg-white/[0.01]">
+                                            <div className="border-t border-slate-200 px-5 py-4 bg-white/[0.01]">
                                                 <div className="grid grid-cols-2 gap-3 mb-3">
-                                                    <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                                                        <span className="text-[8px] font-mono text-white/20 uppercase">ECI Receipt Number</span>
+                                                    <div className="p-3 rounded-lg bg-white/[0.02] border border-slate-200">
+                                                        <span className="text-[8px] font-mono text-slate-400 uppercase">ECI Receipt Number</span>
                                                         <p className="text-[11px] text-green-400 font-mono font-medium mt-0.5">{r.receipt}</p>
                                                     </div>
-                                                    <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                                                        <span className="text-[8px] font-mono text-white/20 uppercase">Digitally Signed By</span>
-                                                        <p className="text-[11px] text-white/60 font-medium mt-0.5">{r.signedBy}</p>
+                                                    <div className="p-3 rounded-lg bg-white/[0.02] border border-slate-200">
+                                                        <span className="text-[8px] font-mono text-slate-400 uppercase">Digitally Signed By</span>
+                                                        <p className="text-[11px] text-slate-600 font-medium mt-0.5">{r.signedBy}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-4 text-[9px] text-white/30 mb-3">
+                                                <div className="flex items-center gap-4 text-[9px] text-slate-500 mb-3">
                                                     <span>📄 {r.sections} sections</span><span>📝 {r.pages} pages</span>
                                                     <span>📤 Submitted: {r.submitted}</span><span>✅ Accepted: {r.accepted}</span>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-1"><Icon name="download" size={13} /> DOWNLOAD PDF</button>
-                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-1"><Icon name="receipt" size={13} /> VIEW RECEIPT</button>
-                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-1"><Icon name="verified" size={13} /> VERIFY SIGNATURE</button>
+                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-slate-500 border border-slate-200 hover:bg-white/10 transition-all flex items-center gap-1"><Icon name="download" size={13} /> DOWNLOAD PDF</button>
+                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-slate-500 border border-slate-200 hover:bg-white/10 transition-all flex items-center gap-1"><Icon name="receipt" size={13} /> VIEW RECEIPT</button>
+                                                    <button className="text-[9px] font-mono px-3 py-1.5 rounded-lg bg-white/5 text-slate-500 border border-slate-200 hover:bg-white/10 transition-all flex items-center gap-1"><Icon name="verified" size={13} /> VERIFY SIGNATURE</button>
                                                 </div>
                                             </div>
                                         </motion.div>

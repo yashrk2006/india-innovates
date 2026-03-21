@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function VerificationPage() {
     const router = useRouter();
+
     const [step, setStep] = useState(1); // 1=Aadhaar, 2=OTP, 3=Success
     const [aadhaar, setAadhaar] = useState("");
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);

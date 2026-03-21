@@ -18,6 +18,9 @@ const navItems = [
 // --- Components ---
 
 function Header({ onNotificationToggle, unreadCount }: { onNotificationToggle: () => void; unreadCount: number }) {
+    const [langOpen, setLangOpen] = useState(false);
+    const [lang, setLang] = useState("EN");
+
     return (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-5 py-4 flex items-center justify-between md:hidden">
             <div className="flex items-center gap-3">
@@ -29,7 +32,7 @@ function Header({ onNotificationToggle, unreadCount }: { onNotificationToggle: (
                     <p className="text-xs text-stone-500 font-medium tracking-wide uppercase">BoothIQ Portal</p>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative">
                 <button
                     onClick={onNotificationToggle}
                     className="size-9 rounded-full bg-stone-100 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors relative active:scale-95"
@@ -42,11 +45,25 @@ function Header({ onNotificationToggle, unreadCount }: { onNotificationToggle: (
                     )}
                 </button>
                 <button
-                    onClick={() => alert("Translation feature coming soon.")}
+                    onClick={() => setLangOpen(!langOpen)}
                     className="size-9 rounded-full bg-stone-100 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors active:scale-95"
                 >
-                    <span className="material-symbols-outlined text-[20px]">translate</span>
+                    <span className="text-[10px] font-bold">{lang}</span>
                 </button>
+
+                {langOpen && (
+                    <div className="absolute top-12 right-0 bg-white border border-stone-200 shadow-xl rounded-xl py-2 w-24 flex flex-col z-50 animate-fade-in-up">
+                        {["EN", "HI", "UR"].map(l => (
+                            <button 
+                                key={l}
+                                onClick={() => { setLang(l); setLangOpen(false); }}
+                                className={`px-4 py-2 text-sm text-center hover:bg-stone-50 transition-colors ${lang === l ? "font-bold text-primary" : "text-slate-700 font-medium"}`}
+                            >
+                                {l === "EN" ? "English" : l === "HI" ? "हिंदी" : "اردو"}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
         </header>
     );
@@ -281,10 +298,19 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
 
     // Subscribe to realtime notifications
     useEffect(() => {
-        const unsubscribe = subscribeToNotifications((newNotification) => {
-            setNotifications(prev => [newNotification, ...prev]);
-        });
-        return unsubscribe;
+        let cleanup: (() => void) | undefined;
+        
+        const setupSubscription = async () => {
+            cleanup = await subscribeToNotifications((newNotification) => {
+                setNotifications(prev => [newNotification, ...prev]);
+            });
+        };
+
+        setupSubscription();
+        
+        return () => {
+            if (cleanup) cleanup();
+        };
     }, []);
 
     const handleMarkRead = async (id: number) => {
@@ -302,7 +328,7 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
     };
 
     return (
-        <div className="flex min-h-screen bg-[#f0f2f0] font-body text-slate-900">
+        <div className="flex min-h-screen bg-[#f0f2f0] font-body text-slate-900" suppressHydrationWarning>
             <Sidebar />
 
             <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
