@@ -6,6 +6,9 @@ import { getVoterProfile } from "@/lib/services";
 import type { Voter } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import VoterCard from "@/components/citizen/VoterCard";
+import { useLanguage } from "@/components/citizen/LanguageContext";
+import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 const badges = [
     { name: "Verified Voter", icon: "verified", earned: true, color: "bg-yellow-100 text-yellow-600 border-yellow-200" },
@@ -30,11 +33,12 @@ function genderLabel(g: string | null) {
 
 export default function ProfilePage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"details" | "history" | "settings">("details");
+    const [activeTab, setActiveTab] = useState<"details" | "history" | "settings" | "id">("details");
     const [voter, setVoter] = useState<Voter | null>(null);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
     const [settings, setSettings] = useState({
-        notifications: true, sms: true, language: false, dataSharing: false,
+        notifications: true, sms: true, dataSharing: false,
     });
 
     useEffect(() => {
@@ -115,13 +119,13 @@ export default function ProfilePage() {
             {/* Tabs */}
             <div className="bg-white rounded-xl border border-stone-100 shadow-sm overflow-hidden animate-fade-up stagger-4">
                 <div className="flex border-b border-stone-100">
-                    {(["details", "history", "settings"] as const).map(tab => (
+                    {(["details", "id", "history", "settings"] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`flex-1 py-3 text-sm font-bold capitalize transition-colors ${activeTab === tab ? "text-primary border-b-2 border-primary bg-primary/5" : "text-stone-500 hover:text-slate-700"}`}
                         >
-                            {tab === "details" ? "Personal" : tab === "history" ? "Voting History" : "Settings"}
+                            {tab === "details" ? t("personal_tab") : tab === "id" ? t("digital_id_tab") : tab === "history" ? t("history_tab") : t("settings_tab")}
                         </button>
                     ))}
                 </div>
@@ -141,63 +145,161 @@ export default function ProfilePage() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-center text-stone-400 py-6 text-sm">No voter data available yet.<br />Contact your booth officer.</p>
+                            <div className="text-center py-10 px-4">
+                                <div className="size-16 rounded-full bg-stone-50 flex items-center justify-center mx-auto mb-4 text-stone-300">
+                                    <span className="material-symbols-outlined text-4xl">person_off</span>
+                                </div>
+                                <p className="text-stone-500 font-medium">No voter profile data found.</p>
+                                <p className="text-stone-400 text-sm mt-1">Please ensure your EPIC number is linked to your account.</p>
+                            </div>
                         )
                     )}
 
-                    {activeTab === "history" && (
-                        <div className="space-y-3">
-                            {votingHistory.map((h, i) => (
-                                <div key={i} className="flex items-center gap-4 p-3 bg-stone-50 rounded-xl">
-                                    <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${h.voted ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"}`}>
-                                        <span className="material-symbols-outlined">{h.voted ? "how_to_vote" : "close"}</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-bold text-sm text-slate-900">{h.election}</p>
-                                        <p className="text-xs text-stone-500">{h.booth} · {h.date}</p>
-                                    </div>
-                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${h.voted ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                                        {h.voted ? "Voted" : "Missed"}
+                    {activeTab === "id" && (
+                        <div className="space-y-6">
+                            <div className="relative group">
+                                <VoterCard />
+                                <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center backdrop-blur-[2px]">
+                                    <span className="bg-white px-4 py-2 rounded-lg font-bold text-primary shadow-xl scale-90 group-hover:scale-100 transition-transform">
+                                        {t("authorized_view")}
                                     </span>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <button 
+                                    onClick={() => toast.success("Secure Digital ID Downloaded")}
+                                    className="flex flex-col items-center gap-2 p-4 bg-stone-50 rounded-2xl border border-stone-100 hover:bg-white hover:border-primary/20 transition-all group"
+                                >
+                                    <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">download</span>
+                                    <span className="text-xs font-bold text-slate-900">{t("download_pdf")}</span>
+                                </button>
+                                <button 
+                                    onClick={() => toast.success("QR Code Generated for Booth Scanning")}
+                                    className="flex flex-col items-center gap-2 p-4 bg-stone-50 rounded-2xl border border-stone-100 hover:bg-white hover:border-primary/20 transition-all group"
+                                >
+                                    <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">qr_code_2</span>
+                                    <span className="text-xs font-bold text-slate-900">{t("show_qr_code")}</span>
+                                </button>
+                            </div>
+
+                            {/* DigiLocker Simulation */}
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-200 group">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                            <span className="material-symbols-outlined">cloud_sync</span>
+                                        </div>
+                                        <div>
+                                            <h5 className="font-bold text-sm tracking-tight text-white">Government Sync</h5>
+                                            <p className="text-[10px] text-blue-200">Official Document Integration</p>
+                                        </div>
+                                    </div>
+                                    <span className="px-2 py-0.5 bg-white/20 rounded text-[9px] font-bold uppercase tracking-widest border border-white/20">Secure</span>
+                                </div>
+                                <p className="text-xs text-blue-100 leading-relaxed mb-6">
+                                    Securely sync your election documents from national repositories like DigiLocker and UMANG.
+                                </p>
+                                <button 
+                                    onClick={async () => {
+                                        const id = toast.loading("Connecting to DigiLocker...");
+                                        await new Promise(r => setTimeout(r, 2000));
+                                        toast.success("Documents Synced Successfully", { id });
+                                    }}
+                                    className="w-full py-3 bg-white text-blue-700 rounded-xl font-bold text-xs hover:bg-blue-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-sm">sync</span>
+                                    {t("fetch_from_gov")}
+                                </button>
+                            </div>
+
+                            <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                                <div className="flex items-start gap-3">
+                                    <span className="material-symbols-outlined text-primary text-xl">info</span>
+                                    <p className="text-xs text-stone-600 leading-relaxed">
+                                        {t("e_epic_desc")}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "history" && (
+                        <div className="space-y-4">
+                            {votingHistory.map((h, i) => (
+                                <div key={i} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl border border-stone-100">
+                                    <div>
+                                        <p className="font-bold text-sm text-slate-900">{h.election}</p>
+                                        <p className="text-xs text-stone-500">{h.booth} • {h.date}</p>
+                                    </div>
+                                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${h.voted ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
+                                        {h.voted ? t("vote_cast") : t("not_voted")}
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     )}
 
                     {activeTab === "settings" && (
-                        <div className="space-y-4">
-                            {[
-                                { key: "notifications" as const, label: "Push Notifications", desc: "Receive alerts for scheme updates and grievance status" },
-                                { key: "sms" as const, label: "SMS Alerts", desc: "Text notifications to your registered mobile number" },
-                                { key: "language" as const, label: "Hindi Interface", desc: "Switch app language to Hindi" },
-                                { key: "dataSharing" as const, label: "Data Sharing", desc: "Allow booth officers to view your participation data" },
-                            ].map(s => (
-                                <div key={s.key} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl">
+                        <div className="space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-stone-50 rounded-xl">
                                     <div>
-                                        <p className="font-bold text-sm text-slate-900">{s.label}</p>
-                                        <p className="text-xs text-stone-500 mt-0.5">{s.desc}</p>
+                                        <p className="font-bold text-sm text-slate-900">{t("push_notifications")}</p>
+                                        <p className="text-xs text-stone-500">{t("push_notifications_desc")}</p>
                                     </div>
-                                    <button
-                                        onClick={() => setSettings(prev => ({ ...prev, [s.key]: !prev[s.key] }))}
-                                        className={`relative w-11 h-6 rounded-full transition-colors ${settings[s.key] ? "bg-primary" : "bg-stone-300"}`}
+                                    <button 
+                                        onClick={() => setSettings(prev => ({ ...prev, notifications: !prev.notifications }))}
+                                        className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.notifications ? "bg-primary" : "bg-stone-300"}`}
                                     >
-                                        <span className={`absolute top-1 size-4 rounded-full bg-white shadow transition-transform ${settings[s.key] ? "translate-x-6" : "translate-x-1"}`} />
+                                        <div className={`size-4 bg-white rounded-full transition-transform ${settings.notifications ? "translate-x-6" : "translate-x-0"}`} />
                                     </button>
                                 </div>
-                            ))}
+
+                                <div className="flex items-center justify-between p-4 bg-stone-50 rounded-xl">
+                                    <div>
+                                        <p className="font-bold text-sm text-slate-900">{t("data_sharing")}</p>
+                                        <p className="text-xs text-stone-500">{t("data_sharing_desc")}</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setSettings(prev => ({ ...prev, dataSharing: !prev.dataSharing }))}
+                                        className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.dataSharing ? "bg-primary" : "bg-stone-300"}`}
+                                    >
+                                        <div className={`size-4 bg-white rounded-full transition-transform ${settings.dataSharing ? "translate-x-6" : "translate-x-0"}`} />
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/10">
+                                    <div>
+                                        <p className="font-bold text-sm text-slate-900">{t("hindi_interface")}</p>
+                                        <p className="text-xs text-stone-500">{t("hindi_interface_desc")}</p>
+                                    </div>
+                                    <button 
+                                        className="size-10 rounded-full bg-white border-2 border-primary flex items-center justify-center text-primary font-bold"
+                                    >
+                                        हिं
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                onClick={handleLogout}
+                                className="w-full py-4 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined">logout</span>
+                                {t("sign_out")}
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Sign Out */}
-            <button
-                onClick={handleLogout}
-                className="w-full py-3 border border-red-200 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-            >
-                <span className="material-symbols-outlined">logout</span>
-                Sign Out
-            </button>
         </div>
     );
+}
+
+function genderLabelTranslate(g: string | null, t: any) {
+    if (g === "M") return t("male") || "Male";
+    if (g === "F") return t("female") || "Female";
+    if (g === "O") return t("other") || "Other";
+    return "—";
 }

@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getDashboardStats, getBoothWorkers, getBoothAnalytics } from "@/lib/services";
+import { useLanguage } from "@/components/citizen/LanguageContext";
+import EventModal from "@/components/citizen/EventModal";
+import { motion, AnimatePresence } from "framer-motion";
 
 const quickActions = [
     { label: "Lodge Grievance", icon: "report_problem", href: "/citizen/grievance", color: "bg-red-50 text-red-600 border-red-100" },
@@ -11,9 +14,33 @@ const quickActions = [
 ];
 
 const upcomingEvents = [
-    { id: 1, date: "Mar 4", title: "Voter Registration Drive", location: "Panchayat Bhawan", icon: "event" },
-    { id: 2, date: "Mar 8", title: "Women's Day Health Camp", location: "Community Hall", icon: "medical_services" },
-    { id: 3, date: "Mar 15", title: "Booth Level Officer Visit", location: "Booth #142", icon: "groups" },
+    { 
+        id: 1, 
+        date: "24 MAR", 
+        title: "Voter Registration Mega Drive", 
+        location: "Varanasi Town Hall", 
+        icon: "how_to_vote",
+        description: "A special drive to register new voters and update existing voter IDs. Dedicated help desks will be available for first-time voters.",
+        officialLink: "https://voters.eci.gov.in/"
+    },
+    { 
+        id: 2, 
+        date: "28 MAR", 
+        title: "Public Health Awareness Camp", 
+        location: "Primary Health Centre, Ward 4", 
+        icon: "medical_services",
+        description: "Free health check-ups and information on government health schemes like Ayushman Bharat. Specialized doctors will be available for consultations.",
+        officialLink: "https://www.pmjay.gov.in/"
+    },
+    { 
+        id: 3, 
+        date: "05 APR", 
+        title: "Booth Level Officer (BLO) Meet", 
+        location: "Government School, Booth #142", 
+        icon: "groups",
+        description: "Direct interaction with your Booth Level Officer for any verification or documentation requirements regarding the upcoming elections.",
+        officialLink: "https://eci.gov.in/"
+    },
 ];
 
 function ElectionCountdown() {
@@ -110,31 +137,40 @@ function QuickActions() {
 }
 
 function UpcomingEvents() {
+    const { t } = useLanguage();
+    const [selectedEvent, setSelectedEvent] = useState<typeof upcomingEvents[0] | null>(null);
+
     return (
         <div className="animate-fade-up stagger-4">
-            <h3 className="font-display text-lg font-bold text-slate-800 mb-3">Upcoming Events</h3>
+            <h3 className="font-display text-lg font-bold text-slate-800 mb-3">{t("upcoming_events")}</h3>
             <div className="space-y-3">
                 {upcomingEvents.map(e => (
                     <div
                         key={e.id}
-                        onClick={() => alert(`Registration details for ${e.title} coming soon.`)}
-                        className="bg-white rounded-xl border border-stone-100 p-4 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => setSelectedEvent(e)}
+                        className="bg-white rounded-2xl border border-stone-100 p-4 shadow-sm flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group"
                     >
-                        <div className="shrink-0 text-center bg-primary/10 rounded-xl p-2.5 w-14">
-                            <p className="text-xs font-bold text-primary leading-none">{e.date.split(" ")[0]}</p>
-                            <p className="text-lg font-bold text-primary leading-tight">{e.date.split(" ")[1]}</p>
+                        <div className="shrink-0 text-center bg-primary/10 rounded-xl p-2.5 w-14 group-hover:bg-primary group-hover:text-white transition-colors">
+                            <p className="text-[10px] font-bold text-primary group-hover:text-white/80 leading-none uppercase">{e.date.split(" ")[1]}</p>
+                            <p className="text-xl font-bold text-primary group-hover:text-white leading-tight">{e.date.split(" ")[0]}</p>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm text-slate-900 truncate">{e.title}</p>
-                            <p className="text-xs text-stone-500 flex items-center gap-1 mt-0.5">
+                            <p className="font-bold text-sm text-slate-900 truncate group-hover:text-primary transition-colors">{e.title}</p>
+                            <p className="text-[10px] text-stone-500 flex items-center gap-1 mt-0.5 font-medium uppercase tracking-wider">
                                 <span className="material-symbols-outlined text-sm">location_on</span>
                                 {e.location}
                             </p>
                         </div>
-                        <span className="material-symbols-outlined text-stone-300">chevron_right</span>
+                        <span className="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">chevron_right</span>
                     </div>
                 ))}
             </div>
+
+            <EventModal 
+                isOpen={!!selectedEvent}
+                onClose={() => setSelectedEvent(null)}
+                event={selectedEvent}
+            />
         </div>
     );
 }
@@ -162,7 +198,7 @@ function BoothHealthScore({ boothId }: { boothId: number }) {
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-xl shadow-slate-200/50 animate-fade-up stagger-5">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="font-display font-bold text-slate-900 text-lg">Booth Intelligence</h3>
+                    <h3 className="font-display font-bold text-slate-900 text-lg">{useLanguage().t("booth_intelligence")}</h3>
                     <p className="text-xs text-stone-500">Real-time progress for Booth #{boothId}</p>
                 </div>
                 <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
@@ -217,7 +253,7 @@ function YourBoothTeam({ boothId }: { boothId: number }) {
 
     return (
         <div className="animate-fade-up stagger-2">
-            <h3 className="font-display text-lg font-bold text-slate-800 mb-3 px-1">Your Booth Support Team</h3>
+            <h3 className="font-display text-lg font-bold text-slate-800 mb-3 px-1">{useLanguage().t("your_booth_team")}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {workers.map((w, i) => (
                     <div key={w.id} className={`bg-white/60 backdrop-blur-md rounded-2xl border border-white p-5 shadow-sm flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-up stagger-${i+1}`}>
@@ -289,7 +325,7 @@ function CampaignPromises() {
         <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-5 shadow-lg animate-fade-up stagger-6 border border-slate-700">
             <div className="flex items-center justify-between mb-5">
                 <div>
-                    <h3 className="font-display font-bold text-white text-lg">Manifesto Tracker</h3>
+                    <h3 className="font-display font-bold text-white text-lg">{useLanguage().t("manifesto_tracker")}</h3>
                     <p className="text-xs text-slate-400">Tracking promises made by current leadership</p>
                 </div>
                 <div className="size-10 rounded-xl bg-white/10 flex items-center justify-center text-white backdrop-blur-sm border border-white/10">
@@ -340,7 +376,7 @@ export default function CitizenHomePage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-serif font-bold text-slate-900 tracking-tight">
-                        Namaste, <span className="text-primary">{voter?.name || "Citizen"}</span>
+                        {useLanguage().t("welcome")}, <span className="text-primary">{voter?.name || "Citizen"}</span>
                     </h2>
                     <p className="text-slate-500 font-medium">Welcome to your Citizen Intelligence Portal</p>
                 </div>

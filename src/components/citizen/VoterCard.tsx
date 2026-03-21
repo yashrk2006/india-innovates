@@ -1,6 +1,8 @@
+import { useLanguage } from "./LanguageContext";
 import Link from "next/link";
 
 export default function VoterCard() {
+    const { t } = useLanguage();
     return (
         <div className="px-5 pt-6 pb-2">
             <div className="relative w-full rounded-2xl overflow-hidden shadow-soft bg-gradient-to-br from-primary to-primary-dark text-white p-6">
@@ -11,12 +13,12 @@ export default function VoterCard() {
                 <div className="relative z-10 flex flex-col h-full justify-between gap-6">
                     <div className="flex justify-between items-start">
                         <div>
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-semibold tracking-wide mb-3">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-semibold tracking-wide mb-3 text-white">
                                 <span className="material-symbols-outlined text-[14px]">verified</span>
-                                VERIFIED VOTER
+                                {t("verified_voter")}
                             </div>
-                            <h2 className="font-display text-3xl font-bold leading-tight mb-1">Namaste,<br />Rajesh Kumar</h2>
-                            <p className="text-emerald-100 text-sm opacity-90">EPIC No: UP/65/291/001234</p>
+                            <h2 className="font-display text-3xl font-bold leading-tight mb-1">{t("namaste")},<br />Rajesh Kumar</h2>
+                            <p className="text-emerald-100 text-sm opacity-90">{t("epic_no")}: UP/65/291/001234</p>
                         </div>
                         <div className="size-16 rounded-full border-2 border-white/30 overflow-hidden bg-emerald-800 shadow-inner relative">
                             {/* Using standard img for now as remote pattern needs config or Next Image with correct internal path */}
@@ -34,7 +36,7 @@ export default function VoterCard() {
                                 <span className="material-symbols-outlined">how_to_vote</span>
                             </div>
                             <div>
-                                <p className="text-xs text-emerald-100 uppercase tracking-wider mb-0.5">Your Polling Booth</p>
+                                <p className="text-xs text-emerald-100 uppercase tracking-wider mb-0.5">{t("polling_booth_title")}</p>
                                 <p className="font-bold text-lg leading-tight">Booth No. 142</p>
                                 <p className="text-sm text-emerald-50 mt-1">Panchayat Bhawan, Shivpur, Varanasi</p>
                             </div>
