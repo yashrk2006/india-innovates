@@ -1,28 +1,36 @@
 const twilio = require('twilio');
+const sgMail = require('@sendgrid/mail');
 
+// Twilio Config
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 
-// Initialize Twilio client only if credentials exist to prevent crashes
-let client;
+// SendGrid Config
+const sendgridApiKey = process.env.SENDGRID_API_KEY;
+const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@boothiq.com';
+
+// Initialize Clients
+let twilioClient;
 if (accountSid && authToken) {
-    client = twilio(accountSid, authToken);
+    twilioClient = twilio(accountSid, authToken);
+}
+
+if (sendgridApiKey) {
+    sgMail.setApiKey(sendgridApiKey);
 }
 
 /**
  * Sends an SMS notification to a citizen.
- * @param {string} to - The recipient's phone number (with country code).
- * @param {string} message - The message body.
  */
 const sendSMS = async (to, message) => {
-    if (!client) {
+    if (!twilioClient) {
         console.warn('⚠️ Twilio credentials missing. SMS not sent.');
         return { success: false, error: 'Twilio credentials not configured' };
     }
 
     try {
-        const result = await client.messages.create({
+        const result = await twilioClient.messages.create({
             body: message,
             from: twilioNumber,
             to: to
@@ -37,18 +45,15 @@ const sendSMS = async (to, message) => {
 
 /**
  * Sends a WhatsApp notification to a citizen.
- * @param {string} to - The recipient's phone number (with country code).
- * @param {string} message - The message body.
  */
 const sendWhatsApp = async (to, message) => {
-    if (!client) {
+    if (!twilioClient) {
         console.warn('⚠️ Twilio credentials missing. WhatsApp not sent.');
         return { success: false, error: 'Twilio credentials not configured' };
     }
 
     try {
-        // WhatsApp numbers must be prefixed with 'whatsapp:' in Twilio
-        const result = await client.messages.create({
+        const result = await twilioClient.messages.create({
             body: message,
             from: `whatsapp:${twilioNumber}`,
             to: `whatsapp:${to}`
@@ -61,7 +66,39 @@ const sendWhatsApp = async (to, message) => {
     }
 };
 
+/**
+ * Sends an Email notification to a citizen via SendGrid.
+ * @param {string} to - The recipient's email address.
+ * @param {string} subject - The email subject.
+ * @param {string} text - The plain text body.
+ * @param {string} html - The HTML body (optional).
+ */
+const sendEmail = async (to, subject, text, html) => {
+    if (!sendgridApiKey) {
+        console.warn('⚠️ SendGrid API key missing. Email not sent.');
+        return { success: false, error: 'SendGrid credentials not configured' };
+    }
+
+    const msg = {
+        to: to,
+        from: fromEmail,
+        subject: subject,
+        text: text,
+        html: html || text,
+    };
+
+    try {
+        await sgMail.send(msg);
+        console.log(`✅ Email sent successfully to ${to}`);
+        return { success: true };
+    } catch (error) {
+        console.error(`❌ Error sending email to ${to}:`, error.message);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     sendSMS,
-    sendWhatsApp
+    sendWhatsApp,
+    sendEmail
 };

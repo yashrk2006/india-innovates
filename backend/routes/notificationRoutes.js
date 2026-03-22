@@ -57,4 +57,32 @@ router.post(
     }
 );
 
+/**
+ * Endpoint to send an Email.
+ * POST /api/notifications/email
+ */
+router.post(
+    '/email',
+    [
+        body('to').isEmail().withMessage('Valid recipient email is required'),
+        body('subject').notEmpty().withMessage('Subject is required'),
+        body('text').notEmpty().withMessage('Message body is required')
+    ],
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { to, subject, text, html } = req.body;
+        const result = await notificationService.sendEmail(to, subject, text, html);
+
+        if (result.success) {
+            return res.json({ message: 'Email sent successfully' });
+        } else {
+            return res.status(500).json({ error: result.error });
+        }
+    }
+);
+
 module.exports = router;
