@@ -112,3 +112,31 @@ export async function getGeographyChain(constituencyId: number) {
     }
     return constituency;
 }
+
+/**
+ * Get the profile assigned as leader for a constituency.
+ */
+export async function getConstituencyLeader(constituencyId: number) {
+    const { data: constituency, error: cError } = await supabase
+        .from("constituencies")
+        .select("assigned_leader")
+        .eq("id", constituencyId)
+        .single();
+
+    if (cError || !constituency?.assigned_leader) {
+        return null;
+    }
+
+    const { data: profile, error: pError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", constituency.assigned_leader)
+        .single();
+
+    if (pError) {
+        console.error("Error fetching constituency leader profile:", pError.message);
+        return null;
+    }
+
+    return profile;
+}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { getNotifications, markNotificationRead, markAllNotificationsRead, subscribeToNotifications } from "@/lib/services";
+import { getNotifications, markNotificationRead, markAllNotificationsRead, subscribeToNotifications, getVoterProfile } from "@/lib/services";
 import type { CitizenNotification } from "@/lib/types";
 import { LanguageProvider, useLanguage } from "@/components/citizen/LanguageContext";
 import ESarthiBot from "@/components/citizen/ESarthiBot";
@@ -19,7 +19,7 @@ const navItems = [
 
 // --- Components ---
 
-function Header({ onNotificationToggle, unreadCount }: { onNotificationToggle: () => void; unreadCount: number }) {
+function Header({ onNotificationToggle, unreadCount, constituency }: { onNotificationToggle: () => void; unreadCount: number; constituency: string }) {
     const [langOpen, setLangOpen] = useState(false);
     const { language, setLanguage, t } = useLanguage(); // Use useLanguage hook
 
@@ -30,7 +30,7 @@ function Header({ onNotificationToggle, unreadCount }: { onNotificationToggle: (
                     <span className="material-symbols-outlined text-[20px]">how_to_vote</span>
                 </div>
                 <div>
-                    <h1 className="font-display font-bold text-xl text-slate-900 leading-tight">Varanasi North</h1>
+                    <h1 className="font-display font-bold text-xl text-slate-900 leading-tight">{constituency}</h1>
                     <p className="text-xs text-stone-500 font-medium tracking-wide uppercase">BoothIQ Portal</p>
                 </div>
             </div>
@@ -74,7 +74,7 @@ function Header({ onNotificationToggle, unreadCount }: { onNotificationToggle: (
     );
 }
 
-function Sidebar() {
+function Sidebar({ voterName, boothName, constituencyName }: { voterName: string; boothName: string; constituencyName: string }) {
     const router = useRouter();
     const pathname = usePathname();
 
@@ -151,11 +151,11 @@ function Sidebar() {
             <div className="p-4 border-t border-stone-100">
                 <div className="bg-stone-50 rounded-xl p-4 flex items-center gap-3">
                     <div className="size-10 rounded-full bg-primary/10 shrink-0 flex items-center justify-center text-primary font-bold text-lg">
-                        R
+                        {voterName.charAt(0)}
                     </div>
                     <div className="overflow-hidden flex-1">
-                        <p className="font-bold text-sm text-slate-900 truncate">Rajesh Kumar</p>
-                        <p className="text-xs text-stone-500 truncate">Varanasi North • Booth 142</p>
+                        <p className="font-bold text-sm text-slate-900 truncate">{voterName}</p>
+                        <p className="text-xs text-stone-500 truncate">{constituencyName} • {boothName}</p>
                     </div>
                     <button onClick={handleLogout} className="ml-auto text-stone-400 hover:text-red-500 transition-colors" title="Sign Out">
                         <span className="material-symbols-outlined">logout</span>
@@ -292,34 +292,47 @@ function NotificationPanel({ isOpen, onClose, notifications, onMarkRead, onMarkA
 }
 
 // --- Page Title Map ---
-const pageTitles: Record<string, { title: string; subtitle: string }> = {
-    "/citizen": { title: "Welcome back, Rajesh", subtitle: "Here&apos;s what&apos;s happening in your constituency today." },
+const pageTitles = (name: string, constituency: string) => ({
+    "/citizen": { title: `Welcome back, ${name}`, subtitle: `Here&apos;s what&apos;s happening in ${constituency} today.` },
     "/citizen/profile": { title: "My Profile", subtitle: "Manage your voter identity and participation." },
     "/citizen/voter-services": { title: "Voter Services", subtitle: "Download forms and guides for electoral participation." },
     "/citizen/schemes": { title: "Government Schemes", subtitle: "Benefits and programs available for you." },
-    "/citizen/area-updates": { title: "Area Updates", subtitle: "Development work in Ward 4, Varanasi North." },
+    "/citizen/area-updates": { title: "Area Updates", subtitle: `Development work in ${constituency}.` },
     "/citizen/grievance": { title: "Lodge Grievance", subtitle: "Report issues in your area." },
     "/citizen/verify": { title: "Verification", subtitle: "Verify your identity securely." },
-};
+});
 
 export default function CitizenLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState<CitizenNotification[]>([]);
+    const [voter, setVoter] = useState<any>(null);
     const unreadCount = notifications.filter(n => !n.is_read).length;
-    const pageInfo = pageTitles[pathname] || pageTitles["/citizen"];
 
-    // Fetch notifications from Supabase
+    const voterName = voter?.eci?.name || voter?.name || "Citizen";
+    const boothName = voter?.eci?.booth?.name || "Your Booth";
+    const constituencyName = voter?.eci?.booth?.constituency?.name || "Your Area";
+
+    const pageInfo = (pageTitles(voterName.split(' ')[0], constituencyName) as any)[pathname] || pageTitles(voterName.split(' ')[0], constituencyName)["/citizen"];
+
+    // Fetch notifications and voter profile
     useEffect(() => {
-        getNotifications().then(setNotifications);
+        getVoterProfile().then(v => {
+            if (v) {
+                setVoter(v);
+                getNotifications(v.id).then(setNotifications);
+            }
+        });
     }, []);
 
     // Subscribe to realtime notifications
     useEffect(() => {
+        if (!voter?.id) return;
+
         let cleanup: (() => void) | undefined;
         
         const setupSubscription = async () => {
-            cleanup = await subscribeToNotifications((newNotification) => {
+            cleanup = await subscribeToNotifications(voter.id, (newNotification) => {
                 setNotifications(prev => [newNotification, ...prev]);
             });
         };
@@ -329,7 +342,7 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
         return () => {
             if (cleanup) cleanup();
         };
-    }, []);
+    }, [voter?.id]);
 
     const handleMarkRead = async (id: number) => {
         const success = await markNotificationRead(id);
@@ -339,7 +352,8 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
     };
 
     const handleMarkAllRead = async () => {
-        const success = await markAllNotificationsRead();
+        if (!voter?.id) return;
+        const success = await markAllNotificationsRead(voter.id);
         if (success) {
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
         }
@@ -348,10 +362,10 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
     return (
         <LanguageProvider>
             <div className="flex min-h-screen bg-[#f0f2f0] font-body text-slate-900" suppressHydrationWarning>
-                <Sidebar />
+                <Sidebar voterName={voterName} boothName={boothName} constituencyName={constituencyName} />
 
                 <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-                    <Header onNotificationToggle={() => setShowNotifications(true)} unreadCount={unreadCount} />
+                    <Header onNotificationToggle={() => setShowNotifications(true)} unreadCount={unreadCount} constituency={constituencyName} />
 
                     {/* Desktop Header */}
                     <header className="hidden md:flex items-center justify-between px-8 py-5 bg-white/50 backdrop-blur-sm sticky top-0 z-30 border-b border-stone-200/50">
@@ -365,7 +379,7 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
 
                             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-stone-200 shadow-sm">
                                 <span className="size-2 bg-green-500 rounded-full animate-pulse" />
-                                <span className="text-xs font-bold text-slate-700">Booth #142 Online</span>
+                                <span className="text-xs font-bold text-slate-700">{boothName} Online</span>
                             </div>
                             <button
                                 onClick={() => setShowNotifications(true)}

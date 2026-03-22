@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { getInfrastructureProjects, toggleLikeProject } from "@/lib/services";
+import { getInfrastructureProjects, toggleLikeProject, getVoterProfile } from "@/lib/services";
 import type { InfrastructureProject } from "@/lib/types";
 import ProjectMap from "@/components/citizen/ProjectMap";
 import { motion, AnimatePresence } from "framer-motion";
@@ -73,9 +73,12 @@ export default function AreaUpdatesPage() {
     const projectRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
     useEffect(() => {
-        getInfrastructureProjects().then(data => {
-            setUpdates(data);
-            setLoading(false);
+        getVoterProfile().then(v => {
+            const cid = v?.eci?.booth?.constituency_id || v?.constituency_id;
+            getInfrastructureProjects(cid).then(data => {
+                setUpdates(data);
+                setLoading(false);
+            });
         });
     }, []);
 
@@ -83,14 +86,22 @@ export default function AreaUpdatesPage() {
     const filtered = filter === "All" ? updates : updates.filter(u => (u.type ?? "Other") === filter);
 
     const handleLike = async (update: InfrastructureProject) => {
+        const profile = await getVoterProfile();
+        if (!profile) return;
+
         const isLiked = likedIds.has(update.id);
-        const newCount = await toggleLikeProject(update.id, update.likes_count, isLiked);
-        setUpdates(prev => prev.map(u => u.id === update.id ? { ...u, likes_count: newCount } : u));
-        setLikedIds(prev => {
-            const next = new Set(prev);
-            isLiked ? next.delete(update.id) : next.add(update.id);
-            return next;
-        });
+        const success = await toggleLikeProject(update.id, profile.id);
+        
+        if (success !== undefined) {
+            setUpdates(prev => prev.map(u => 
+                u.id === update.id ? { ...u, likes_count: (u.likes_count || 0) + (isLiked ? -1 : 1) } : u
+            ));
+            setLikedIds(prev => {
+                const next = new Set(prev);
+                isLiked ? next.delete(update.id) : next.add(update.id);
+                return next;
+            });
+        }
     };
 
     const formatDate = (dateStr: string) => {

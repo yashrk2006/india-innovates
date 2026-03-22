@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getDashboardStats, getBoothWorkers, getBoothAnalytics } from "@/lib/services";
+import { getDashboardStats, getBoothWorkers, getBoothAnalytics, getFullVoterDetails, getConstituencyLeader, getBoothAdhyaksh, getInfrastructureProjects, getVoterProfile } from "@/lib/services";
 import { useLanguage } from "@/components/citizen/LanguageContext";
 import EventModal from "@/components/citizen/EventModal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -88,11 +88,13 @@ function QuickStats({ voter }: { voter: any }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getDashboardStats().then(data => {
-            setStats(data);
-            setLoading(false);
-        });
-    }, []);
+        if (voter?.id) {
+            getDashboardStats({ voterId: voter.id }).then(data => {
+                setStats(data);
+                setLoading(false);
+            });
+        }
+    }, [voter?.id]);
 
     const statItems = [
         { value: voter?.booth_id || "142", label: "Booth No.", icon: "how_to_vote", color: "text-green-600 bg-green-50" },
@@ -237,25 +239,36 @@ function BoothHealthScore({ boothId }: { boothId: number }) {
 
 function YourBoothTeam({ boothId }: { boothId: number }) {
     const [workers, setWorkers] = useState<any[]>([]);
+    const [adhyaksh, setAdhyaksh] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (boothId) {
-            getBoothWorkers(boothId).then(data => {
-                setWorkers(data);
+            Promise.all([
+                getBoothWorkers(boothId),
+                getBoothAdhyaksh(boothId)
+            ]).then(([workerData, adhyakshData]) => {
+                setWorkers(workerData);
+                setAdhyaksh(adhyakshData);
                 setLoading(false);
             });
         }
     }, [boothId]);
 
     if (loading) return <div className="animate-pulse bg-stone-100 h-32 rounded-xl" />;
-    if (workers.length === 0) return null;
+    
+    // Combine adhyaksh and workers for the display
+    const team = [];
+    if (adhyaksh) team.push(adhyaksh);
+    team.push(...workers);
+
+    if (team.length === 0) return null;
 
     return (
         <div className="animate-fade-up stagger-2">
             <h3 className="font-display text-lg font-bold text-slate-800 mb-3 px-1">{useLanguage().t("your_booth_team")}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {workers.map((w, i) => (
+                {team.map((w, i) => (
                     <div key={w.id} className={`bg-white/60 backdrop-blur-md rounded-2xl border border-white p-5 shadow-sm flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-up stagger-${i+1}`}>
                         <div className="size-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary/20 ring-4 ring-white">
                             {w.name[0]}
@@ -269,12 +282,12 @@ function YourBoothTeam({ boothId }: { boothId: number }) {
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={() => alert(`Calling ${w.name}...`)} className="size-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-100 hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-90">
+                            <a href={`tel:${w.phone || '000'}`} className="size-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-100 hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-90">
                                 <span className="material-symbols-outlined text-lg">call</span>
-                            </button>
-                             <button onClick={() => alert(`Starting Chat with ${w.name}...`)} className="size-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-90">
+                            </a>
+                             <Link href={`/citizen/chat?with=${w.id}`} className="size-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-90">
                                 <span className="material-symbols-outlined text-lg">chat</span>
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 ))}
@@ -283,8 +296,23 @@ function YourBoothTeam({ boothId }: { boothId: number }) {
     );
 }
 
-function ElectedRepresentatives() {
-    const reps = [
+function ElectedRepresentatives({ constituencyId }: { constituencyId?: number }) {
+    const [mla, setMla] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (constituencyId) {
+            getConstituencyLeader(constituencyId).then((data: any) => {
+                setMla(data);
+                setLoading(false);
+            });
+        }
+    }, [constituencyId]);
+
+    const reps = mla ? [
+        { role: "Member of Legislative Assembly", name: mla.name, party: "BJP", image: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=150" },
+        { role: "City Corporator (Ward 4)", name: "Amit Patel", party: "BJP", image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" },
+    ] : [
         { role: "Member of Legislative Assembly", name: "Ravi Sharma", party: "BJP", image: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=150" },
         { role: "City Corporator (Ward 4)", name: "Amit Patel", party: "BJP", image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" },
     ];
@@ -313,16 +341,32 @@ function ElectedRepresentatives() {
     );
 }
 
-function CampaignPromises() {
-    const promises = [
-        { title: "24/7 Water Supply in Ward 4", status: "In Progress", progress: 65 },
+function CampaignPromises({ constituencyId }: { constituencyId?: number }) {
+    const [promises, setPromises] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (constituencyId) {
+            getInfrastructureProjects(constituencyId).then((data: any[]) => {
+                setPromises((data || []).slice(0, 4)); // Limit to top 4 for UI
+                setLoading(false);
+            });
+        }
+    }, [constituencyId]);
+
+    const displayPromises = promises.length > 0 ? promises.map(p => ({
+        title: p.title,
+        status: p.status === 'completed' ? 'Completed' : (p.progress > 0 ? 'In Progress' : 'Planned'),
+        progress: p.progress
+    })) : [
+        { title: "24/7 Water Supply", status: "In Progress", progress: 65 },
         { title: "New Community Health Clinic", status: "Completed", progress: 100 },
         { title: "Free Wi-Fi at Panchayat", status: "Planned", progress: 0 },
         { title: "Repair Main Connection Road", status: "Completed", progress: 100 },
     ];
 
     return (
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-5 shadow-lg animate-fade-up stagger-6 border border-slate-700">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-5 shadow-lg animate-fade-up stagger-6 border border-slate-700 min-h-[300px]">
             <div className="flex items-center justify-between mb-5">
                 <div>
                     <h3 className="font-display font-bold text-white text-lg">{useLanguage().t("manifesto_tracker")}</h3>
@@ -334,11 +378,11 @@ function CampaignPromises() {
             </div>
 
             <div className="space-y-4">
-                {promises.map((p, i) => (
+                {displayPromises.map((p, i) => (
                     <div key={i}>
                         <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-sm font-medium text-slate-200">{p.title}</span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded focus:outline-none ${
+                            <span className="text-sm font-medium text-slate-200 truncate pr-2">{p.title}</span>
+                            <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded focus:outline-none ${
                                 p.progress === 100 ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 
                                 p.progress > 0 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 
                                 'bg-slate-700 text-slate-300 border border-slate-600'
@@ -363,13 +407,25 @@ function CampaignPromises() {
 
 export default function CitizenHomePage() {
     const [voter, setVoter] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const stored = localStorage.getItem("verified_voter");
-        if (stored) {
-            setVoter(JSON.parse(stored));
-        }
+        getVoterProfile().then(data => {
+            setVoter(data);
+            setLoading(false);
+        });
     }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    const boothId = voter?.eci?.booth_id || voter?.booth_id || 142;
+    const constituencyId = voter?.eci?.booth?.constituency_id || voter?.constituency_id;
 
     return (
         <div className="p-5 md:p-0 space-y-6">
@@ -392,12 +448,12 @@ export default function CitizenHomePage() {
             </div>
 
             <ElectionCountdown />
-            <YourBoothTeam boothId={voter?.eci?.booth_id || 142} />
+            <YourBoothTeam boothId={boothId} />
             <QuickStats voter={voter} />
-            <ElectedRepresentatives />
+            <ElectedRepresentatives constituencyId={constituencyId} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <BoothHealthScore boothId={voter?.eci?.booth_id || 142} />
-                <CampaignPromises />
+                <BoothHealthScore boothId={boothId} />
+                <CampaignPromises constituencyId={constituencyId} />
             </div>
             <QuickActions />
             <UpcomingEvents />

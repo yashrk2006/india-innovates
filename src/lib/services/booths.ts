@@ -95,3 +95,44 @@ export async function updateBooth(id: number, updates: Partial<Pick<BoothRow, "n
     }
     return data;
 }
+
+/**
+ * Get the profile of the Booth Adhyaksh for a given booth.
+ */
+export async function getBoothAdhyaksh(boothId: number) {
+    const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("role", "booth_adhyaksh")
+        .eq("jurisdiction_id", boothId)
+        .single();
+
+    if (error) {
+        // Not all booths may have an adhyaksh assigned yet
+        return null;
+    }
+
+    return profile;
+}
+
+/**
+ * Get analytics for a specific booth.
+ */
+export async function getBoothAnalytics(boothId: number) {
+    const { count: resolvedGrievances } = await supabase
+        .from("grievances")
+        .select("id", { count: "exact", head: true })
+        .eq("booth_id", boothId)
+        .eq("status", "resolved");
+
+    const { count: totalGrievances } = await supabase
+        .from("grievances")
+        .select("id", { count: "exact", head: true })
+        .eq("booth_id", boothId);
+
+    return {
+        resolvedGrievances: resolvedGrievances || 0,
+        totalGrievances: totalGrievances || 0,
+        resolutionRate: totalGrievances ? Math.round((resolvedGrievances! / totalGrievances!) * 100) : 0,
+    };
+}

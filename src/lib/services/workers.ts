@@ -45,7 +45,7 @@ export interface WorkerActivity {
 /**
  * List all workers (profiles with role = 'booth_worker').
  */
-export async function getWorkers(boothId?: number): Promise<WorkerProfile[]> {
+export async function getBoothWorkers(boothId?: number): Promise<WorkerProfile[]> {
     let query = supabase
         .from("profiles")
         .select("*")
@@ -68,7 +68,7 @@ export async function getWorkers(boothId?: number): Promise<WorkerProfile[]> {
  * Get worker stats summary.
  */
 export async function getWorkerStats() {
-    const workers = await getWorkers();
+    const workers = await getBoothWorkers();
     const total = workers.length;
     const active = workers.filter(w => w.status === "active").length;
     const pending = workers.filter(w => w.status === "pending").length;

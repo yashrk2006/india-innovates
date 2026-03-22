@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getVoterSchemes, applyToScheme } from "@/lib/services";
-import { getSchemes } from "@/lib/services/schemes";
+import { getVoterSchemes, applyToScheme, getSchemes, getVoterProfile } from "@/lib/services";
 import type { VoterSchemeStatus, Scheme } from "@/lib/types";
 
 const filters = ["All", "eligible", "enrolled", "applied"];
@@ -26,8 +25,14 @@ export default function SchemesPage() {
     useEffect(() => {
         const fetchAll = async () => {
             try {
+                const profile = await getVoterProfile();
+                if (!profile) {
+                    setLoading(false);
+                    return;
+                }
+
                 const [voterStats, allSchemes] = await Promise.all([
-                    getVoterSchemes(),
+                    getVoterSchemes(profile.id),
                     getSchemes()
                 ]);
 
@@ -81,8 +86,11 @@ export default function SchemesPage() {
 
     const handleApply = async () => {
         if (!selectedScheme?.scheme) return;
+        const profile = await getVoterProfile();
+        if (!profile) return;
+        
         setApplying(true);
-        const success = await applyToScheme(selectedScheme.scheme.id);
+        const success = await applyToScheme(profile.id, selectedScheme.scheme.id);
         setApplying(false);
         if (success) {
             setApplied(true);

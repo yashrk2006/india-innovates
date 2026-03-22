@@ -134,3 +134,40 @@ export async function getVoterCountByBooth() {
     }
     return counts;
 }
+
+/**
+ * Get full voter details joined with ECI, Booth, and Constituency data.
+ */
+export async function getFullVoterDetails(profileId: string) {
+    // 1. Get the voter record using profile_id
+    const { data: voter, error: vError } = await supabase
+        .from("voters")
+        .select(`
+            *,
+            eci:voters_eci(
+                *,
+                booth:booths(
+                    *,
+                    constituency:constituencies(*)
+                )
+            )
+        `)
+        .eq("profile_id", profileId)
+        .single();
+
+    if (vError) {
+        console.error("Error fetching full voter details:", vError.message);
+        return null;
+    }
+
+    return voter as any;
+}
+
+/**
+ * Get the currently logged in voter's profile.
+ */
+export async function getVoterProfile() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    return getFullVoterDetails(user.id);
+}

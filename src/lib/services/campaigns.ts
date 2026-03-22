@@ -135,3 +135,36 @@ export async function getCampaignDeliveryStats(campaignId: number) {
         failed: rows.filter(r => r.status === "failed").length,
     };
 }
+
+/**
+ * Get infrastructure projects for a constituency.
+ */
+export async function getInfrastructureProjects(constituencyId: number) {
+    const { data, error } = await supabase
+        .from("infrastructure_projects")
+        .select("*")
+        .eq("constituency_id", constituencyId)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("Error fetching infrastructure projects:", error.message);
+        return [];
+    }
+    return data;
+}
+
+/**
+ * Toggle like for an infrastructure project.
+ */
+export async function toggleLikeProject(projectId: number, voterId: number): Promise<boolean> {
+    const { data, error } = await supabase.rpc("toggle_project_like", {
+        p_project_id: projectId,
+        p_voter_id: voterId
+    });
+
+    if (error) {
+        console.error("Error toggling project like:", error.message);
+        return false;
+    }
+    return !!data;
+}

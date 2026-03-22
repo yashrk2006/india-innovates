@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWorkers, getWorkerStats } from "@/lib/services/workers";
+import { getBoothWorkers, getWorkerStats } from "@/lib/services/workers";
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(workerStats);
         }
 
-        const workers = await getWorkers(
+        const workers = await getBoothWorkers(
             boothId ? Number(boothId) : undefined
         );
         return NextResponse.json(workers);

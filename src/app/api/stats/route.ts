@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDashboardKPIs, getActivitySummary } from "@/lib/services/reports";
+import { getDashboardStats, getActivitySummary } from "@/lib/services/reports";
 import { getSchemeGaps } from "@/lib/services/schemes";
 
 export async function GET(request: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(activity);
         }
 
-        const kpis = await getDashboardKPIs(role);
+        const kpis = await getDashboardStats({ role });
         return NextResponse.json(kpis);
     } catch (error) {
         console.error("API error:", error);

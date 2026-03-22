@@ -3,22 +3,37 @@ import { supabase } from "../supabase";
 // ── REPORTS & STATS SERVICE ──────────────────────────────────────
 
 /**
- * Get role-based dashboard KPIs.
+ * Get role-based dashboard KPIs / stats.
  */
-export async function getDashboardKPIs(role?: string) {
-    // Parallel queries for all KPI data
+export async function getDashboardStats(filters?: { role?: string; voterId?: string | number; boothId?: number }) {
+    // Queries for KPI data with optional filtering
+    let grievanceQuery = supabase.from("grievances").select("id, status", { count: "exact" });
+    let schemeQuery = supabase.from("voter_scheme_status").select("id", { count: "exact" });
+    let campaignQuery = supabase.from("campaigns").select("id", { count: "exact" });
+
+    if (filters?.voterId) {
+        grievanceQuery = grievanceQuery.eq("voter_id", filters.voterId);
+        schemeQuery = schemeQuery.eq("voter_id", filters.voterId);
+    }
+
+    if (filters?.boothId) {
+        // If we want booth specific stats, we filter accordingly
+        // For simple citizen dashboard, we might want their specific stats
+    }
+
     const [boothRes, voterRes, workerRes, grievanceRes, schemeRes, campaignRes] = await Promise.all([
         supabase.from("booths").select("id", { count: "exact" }),
         supabase.from("voters").select("id", { count: "exact" }),
         supabase.from("profiles").select("id", { count: "exact" }).eq("role", "booth_worker"),
-        supabase.from("grievances").select("id, status", { count: "exact" }),
-        supabase.from("voter_scheme_status").select("id", { count: "exact" }),
-        supabase.from("campaigns").select("id", { count: "exact" }),
+        grievanceQuery,
+        schemeQuery,
+        campaignQuery,
     ]);
 
     // Grievance breakdown
     const grievances = grievanceRes.data || [];
     const unresolvedGrievances = grievances.filter((g: any) => g.status !== "resolved").length;
+    const activeGrievances = grievances.filter((g: any) => g.status === "open" || g.status === "pending").length;
 
     return {
         totalBooths: boothRes.count || 0,
@@ -26,8 +41,11 @@ export async function getDashboardKPIs(role?: string) {
         totalWorkers: workerRes.count || 0,
         totalGrievances: grievanceRes.count || 0,
         unresolvedGrievances,
+        activeGrievances,
+        activeSchemes: schemeRes.count || 0,
         totalSchemeEnrollments: schemeRes.count || 0,
         totalCampaigns: campaignRes.count || 0,
+        totalUpdates: campaignRes.count || 0,
     };
 }
 

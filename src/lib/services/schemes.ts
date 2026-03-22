@@ -140,3 +140,24 @@ export async function getVoterSchemes(voterId: number): Promise<VoterSchemeStatu
     }
     return (data || []) as VoterSchemeStatus[];
 }
+
+/**
+ * Apply for a scheme as a citizen.
+ */
+export async function applyToScheme(voterId: string | number, schemeId: number): Promise<boolean> {
+    const supabase = createClient();
+    const { error } = await supabase
+        .from("voter_scheme_status")
+        .upsert({
+            voter_id: voterId,
+            scheme_id: schemeId,
+            status: "applied",
+            applied_at: new Date().toISOString(),
+        }, { onConflict: "voter_id,scheme_id" });
+
+    if (error) {
+        console.error("Error applying for scheme:", error.message);
+        return false;
+    }
+    return true;
+}
