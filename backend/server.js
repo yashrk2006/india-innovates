@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const aiRoutes = require('./routes/aiRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,10 +19,11 @@ app.use((req, res, next) => {
 
 // Main Routes
 app.get('/', (req, res) => {
-    res.json({ message: 'Sarvam AI Proxy Backend is Live!', endpoints: ['/health', '/api/ai'] });
+    res.json({ message: 'Sarvam AI Proxy Backend is Live!', endpoints: ['/health', '/api/ai', '/api/notifications'] });
 });
 
 app.use('/api/ai', aiRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
