@@ -79,7 +79,7 @@ export async function proxy(request: NextRequest) {
     
     // Redirect logged in users away from auth
     if (pathname.startsWith('/auth') && user) {
-        const role = user.user_metadata?.role || userRole?.value || 'citizen'
+        const role = ((user as any).user_metadata?.role || (userRole as any)?.value || 'citizen') as string;
         const url = request.nextUrl.clone()
         if (role === 'citizen') {
             url.pathname = '/citizen'

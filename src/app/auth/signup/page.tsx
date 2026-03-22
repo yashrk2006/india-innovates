@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -98,21 +98,23 @@ function SignUpForm() {
                 }
             });
 
-            if (authError) {
-                toast.error(authError.message);
+            const errorMessage = authError?.message;
+            if (errorMessage) {
+                toast.error(errorMessage as any);
                 setLoading(false);
                 return;
             }
 
-            if (authData.user && role === "citizen") {
+            const authUser = authData?.user;
+            if (authUser && role === "citizen") {
                 const storedVoter = localStorage.getItem("verified_voter");
                 if (storedVoter) {
-                    const voterData = JSON.parse(storedVoter);
+                    const voterData = JSON.parse(storedVoter as string);
                     
                     // Link to operational 'voters' table
                     await supabase.from("voters").insert({
-                        profile_id: authData.user.id,
-                        eci_voter_id: voterData.id,
+                        profile_id: (authUser as any).id,
+                        eci_voter_id: voterData.id as string,
                         is_key_voter: false,
                         segment: "Neutral"
                     });

@@ -37,6 +37,9 @@
   ],
   "exclude": [
     "node_modules",
-    "booth-iq"
+    "booth-iq",
+    "check-db.ts",
+    "test-db-connection.ts",
+    "theme-replace.js"
   ]
 }

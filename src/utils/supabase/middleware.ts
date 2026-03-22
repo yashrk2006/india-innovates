@@ -74,7 +74,7 @@ export async function updateSession(request: NextRequest) {
       const roleCookie = request.cookies.get('user_role')?.value;
       
       const url = request.nextUrl.clone();
-      if (roleCookie && ['ECI_OBSERVER', 'RO', 'SECTOR_CR', 'PARTY_CENTRAL', 'BOOTH_MANAGER', 'SUPER_ADMIN'].includes(roleCookie)) {
+      if (roleCookie && (['ECI_OBSERVER', 'RO', 'SECTOR_CR', 'PARTY_CENTRAL', 'BOOTH_MANAGER', 'SUPER_ADMIN'] as string[]).includes(roleCookie as string)) {
           url.pathname = '/dashboard';
       } else {
           url.pathname = '/citizen';

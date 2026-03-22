@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 
 function Icon({ name, className = "", size, style }: { name: string; className?: string; size?: number; style?: React.CSSProperties }) {

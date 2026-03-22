@@ -175,8 +175,18 @@ function LoginForm() {
                 password,
             });
 
-            if (authError) {
-                toast.error(authError.message);
+            const errorMessage = authError?.message;
+
+            if (errorMessage) {
+                toast.error(errorMessage as any);
+                setLoading(false);
+                return;
+            }
+
+            const userId = authData?.user?.id;
+
+            if (!userId) {
+                toast.error("Authentication failed. Please try again.");
                 setLoading(false);
                 return;
             }
@@ -185,7 +195,7 @@ function LoginForm() {
             const { data: profile, error: profileError } = await supabase
                 .from("profiles")
                 .select("role")
-                .eq("id", authData.user.id)
+                .eq("id", userId)
                 .single();
 
             if (profileError || !profile) {
@@ -195,7 +205,7 @@ function LoginForm() {
                 return;
             }
 
-            const userRole = profile.role;
+            const userRole = (profile as any)?.role || roleKey;
 
             // Set role cookie for legacy simulated role-based routing
             document.cookie = `user_role=${userRole}; path=/`;
