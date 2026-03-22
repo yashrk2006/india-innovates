@@ -11,29 +11,53 @@ export default function ESarthiBot() {
         { role: "bot", content: language === 'HI' ? "नमस्ते! मैं ई-सारथी हूँ। मैं आपकी कैसे मदद कर सकता हूँ?" : "Namaste! I am E-Sarthi. How can I help you today?" }
     ]);
     const [input, setInput] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSend = () => {
-        if (!input.trim()) return;
+    const handleSend = async () => {
+        if (!input.trim() || isLoading) return;
         
-        const newMessages = [...messages, { role: "user", content: input }];
+        const userMessage = { role: "user", content: input };
+        const newMessages = [...messages, userMessage];
         setMessages(newMessages);
         setInput("");
+        setIsLoading(true);
 
-        // Simulated AI Response
-        setTimeout(() => {
-            let response = "";
-            const lowerInput = input.toLowerCase();
-            
-            if (lowerInput.includes("voter") || lowerInput.includes("pancard") || lowerInput.includes("card")) {
-                response = language === 'HI' ? "आप 'मतदाता सेवा' अनुभाग में अपना डिजिटल आईडी देख सकते हैं।" : "You can check your Digital ID in the 'Voter Services' section.";
-            } else if (lowerInput.includes("booth") || lowerInput.includes("polling")) {
-                response = language === 'HI' ? "पोलिंग स्टेशन नेविगेटर आपको आपके बूथ तक ले जाएगा।" : "The Polling Station Navigator will guide you to your booth.";
-            } else {
-                response = language === 'HI' ? "मैं समझ गया। क्या आप निर्वाचन संबंधी किसी और जानकारी में रुचि रखते हैं?" : "I understand. Are you interested in any other election-related information?";
-            }
+        try {
+            // Prepare messages for Sarvam AI (mapping 'bot' to 'assistant')
+            const apiMessages = [
+                { 
+                    role: "system", 
+                    content: "You are E-Sarthi, a helpful AI assistant for the India Innovates 2026 Booth Management System. Your goal is to help citizens with voter services, polling station locations, and election information. Be polite and professional. Respond in the user's language (Hindi or English)."
+                },
+                ...newMessages.map(m => ({
+                    role: m.role === "bot" ? "assistant" : "user",
+                    content: m.content
+                }))
+            ];
 
-            setMessages([...newMessages, { role: "bot", content: response }]);
-        }, 1000);
+            const response = await fetch("/api/ai/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: apiMessages }),
+            });
+
+            if (!response.ok) throw new Error("Failed to get AI response");
+
+            const data = await response.json();
+            const botContent = data.choices?.[0]?.message?.content || 
+                             data.content || 
+                             (language === 'HI' ? "क्षमा करें, मैं अभी जवाब नहीं दे सकता।" : "Sorry, I cannot respond right now.");
+
+            setMessages([...newMessages, { role: "bot", content: botContent }]);
+        } catch (error) {
+            console.error("Chatbot error:", error);
+            setMessages([...newMessages, { 
+                role: "bot", 
+                content: language === 'HI' ? "नेटवर्क त्रुटि। कृपया बाद में प्रयास करें।" : "Network error. Please try again later." 
+            }]);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -78,6 +102,15 @@ export default function ESarthiBot() {
                                     </div>
                                 </div>
                             ))}
+                            {isLoading && (
+                                <div className="flex justify-start">
+                                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-stone-100 shadow-sm flex gap-1">
+                                        <div className="size-1.5 bg-stone-300 rounded-full animate-bounce"></div>
+                                        <div className="size-1.5 bg-stone-300 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                        <div className="size-1.5 bg-stone-300 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Input */}
@@ -93,9 +126,10 @@ export default function ESarthiBot() {
                                 />
                                 <button 
                                     onClick={handleSend}
-                                    className="bg-primary text-white size-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                                    disabled={isLoading}
+                                    className={`${isLoading ? 'bg-stone-400' : 'bg-primary'} text-white size-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20`}
                                 >
-                                    <span className="material-symbols-outlined">send</span>
+                                    <span className="material-symbols-outlined">{isLoading ? 'hourglass_empty' : 'send'}</span>
                                 </button>
                             </div>
                         </div>
