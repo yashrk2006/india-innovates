@@ -19,9 +19,17 @@ app.get('/health', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`\n🚀 Sarvam AI Proxy Backend running at http://localhost:${PORT}`);
-    console.log(`   - Chat: http://localhost:${PORT}/api/ai/chat`);
-    console.log(`   - Analyze: http://localhost:${PORT}/api/ai/analyze`);
-    console.log(`   - Docs: http://localhost:${PORT}/api/ai/docs`);
+
+    // --- KEEP ALIVE MECHANISM (For Render Free Tier) ---
+    // Pings the local /health endpoint every 14 minutes to prevent sleep
+    if (process.env.NODE_ENV === 'production') {
+        const HOST = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+        setInterval(() => {
+            fetch(`${HOST}/health`)
+                .then(() => console.log('💓 Keep-alive ping successful'))
+                .catch((err) => console.error('💔 Keep-alive ping failed:', err.message));
+        }, 14 * 60 * 1000); // 14 minutes
+    }
 });
