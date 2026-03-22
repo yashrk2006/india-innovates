@@ -81,7 +81,7 @@ export default function ProfilePage() {
         <div className="p-5 md:p-0 space-y-6">
             {/* Voter Card */}
             <div className="animate-fade-up">
-                <VoterCard />
+                <VoterCard voter={voter} loading={loading} />
             </div>
 
             {/* Stats Row */}

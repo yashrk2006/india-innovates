@@ -178,6 +178,7 @@ function UpcomingEvents() {
 }
 
 function BoothHealthScore({ boothId }: { boothId: number }) {
+    const { t } = useLanguage();
     const [analytics, setAnalytics] = useState({ resolvedGrievances: 0, totalGrievances: 0, resolutionRate: 0 });
     const [loading, setLoading] = useState(true);
 
@@ -200,7 +201,7 @@ function BoothHealthScore({ boothId }: { boothId: number }) {
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-xl shadow-slate-200/50 animate-fade-up stagger-5">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="font-display font-bold text-slate-900 text-lg">{useLanguage().t("booth_intelligence")}</h3>
+                    <h3 className="font-display font-bold text-slate-900 text-lg">{t("booth_intelligence")}</h3>
                     <p className="text-xs text-stone-500">Real-time progress for Booth #{boothId}</p>
                 </div>
                 <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
@@ -238,6 +239,7 @@ function BoothHealthScore({ boothId }: { boothId: number }) {
 }
 
 function YourBoothTeam({ boothId }: { boothId: number }) {
+    const { t } = useLanguage();
     const [workers, setWorkers] = useState<any[]>([]);
     const [adhyaksh, setAdhyaksh] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -257,40 +259,44 @@ function YourBoothTeam({ boothId }: { boothId: number }) {
 
     if (loading) return <div className="animate-pulse bg-stone-100 h-32 rounded-xl" />;
     
-    // Combine adhyaksh and workers for the display
     const team = [];
     if (adhyaksh) team.push(adhyaksh);
     team.push(...workers);
 
-    if (team.length === 0) return null;
-
     return (
         <div className="animate-fade-up stagger-2">
-            <h3 className="font-display text-lg font-bold text-slate-800 mb-3 px-1">{useLanguage().t("your_booth_team")}</h3>
+            <h3 className="font-display text-lg font-bold text-slate-800 mb-3 px-1">{t("your_booth_team")}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {team.map((w, i) => (
-                    <div key={w.id} className={`bg-white/60 backdrop-blur-md rounded-2xl border border-white p-5 shadow-sm flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-up stagger-${i+1}`}>
-                        <div className="size-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary/20 ring-4 ring-white">
-                            {w.name[0]}
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="font-bold text-slate-900 leading-tight">{w.name}</h4>
-                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-0.5">{w.role.replace(/-/g, ' ')}</p>
-                            <div className="flex items-center gap-1 mt-1">
-                                <span className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-[10px] text-green-600 font-bold uppercase">Available Now</span>
+                {team.length === 0 ? (
+                    <div className="col-span-full bg-white/40 rounded-2xl border border-dashed border-stone-200 p-8 text-center">
+                        <span className="material-symbols-outlined text-stone-300 text-3xl mb-2">group_off</span>
+                        <p className="text-sm text-stone-500">No team members assigned to Booth #{boothId} yet.</p>
+                    </div>
+                ) : (
+                    team.map((w, i) => (
+                        <div key={w.id} className={`bg-white/60 backdrop-blur-md rounded-2xl border border-white p-5 shadow-sm flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-up stagger-${i+1}`}>
+                            <div className="size-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary/20 ring-4 ring-white">
+                                {w.name?.[0] || 'U'}
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-bold text-slate-900 leading-tight">{w.name}</h4>
+                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-0.5">{w.role?.replace(/-/g, ' ') || 'Team Member'}</p>
+                                <div className="flex items-center gap-1 mt-1">
+                                    <span className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                    <span className="text-[10px] text-green-600 font-bold uppercase">Available Now</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <a href={`tel:${w.phone || '000'}`} className="size-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-100 hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-90">
+                                    <span className="material-symbols-outlined text-lg">call</span>
+                                </a>
+                                <Link href={`/citizen/chat?with=${w.id}`} className="size-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-90">
+                                    <span className="material-symbols-outlined text-lg">chat</span>
+                                </Link>
                             </div>
                         </div>
-                        <div className="flex gap-2">
-                            <a href={`tel:${w.phone || '000'}`} className="size-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-100 hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-90">
-                                <span className="material-symbols-outlined text-lg">call</span>
-                            </a>
-                             <Link href={`/citizen/chat?with=${w.id}`} className="size-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-90">
-                                <span className="material-symbols-outlined text-lg">chat</span>
-                            </Link>
-                        </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
         </div>
     );
@@ -342,6 +348,7 @@ function ElectedRepresentatives({ constituencyId }: { constituencyId?: number })
 }
 
 function CampaignPromises({ constituencyId }: { constituencyId?: number }) {
+    const { t } = useLanguage();
     const [promises, setPromises] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -369,7 +376,7 @@ function CampaignPromises({ constituencyId }: { constituencyId?: number }) {
         <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-5 shadow-lg animate-fade-up stagger-6 border border-slate-700 min-h-[300px]">
             <div className="flex items-center justify-between mb-5">
                 <div>
-                    <h3 className="font-display font-bold text-white text-lg">{useLanguage().t("manifesto_tracker")}</h3>
+                    <h3 className="font-display font-bold text-white text-lg">{t("manifesto_tracker")}</h3>
                     <p className="text-xs text-slate-400">Tracking promises made by current leadership</p>
                 </div>
                 <div className="size-10 rounded-xl bg-white/10 flex items-center justify-center text-white backdrop-blur-sm border border-white/10">
@@ -408,6 +415,7 @@ function CampaignPromises({ constituencyId }: { constituencyId?: number }) {
 export default function CitizenHomePage() {
     const [voter, setVoter] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         getVoterProfile().then(data => {
@@ -425,14 +433,14 @@ export default function CitizenHomePage() {
     }
 
     const boothId = voter?.eci?.booth_id || voter?.booth_id || 142;
-    const constituencyId = voter?.eci?.booth?.constituency_id || voter?.constituency_id;
+    const constituencyId = voter?.eci?.booth?.constituency_id || voter?.constituency_id || 2;
 
     return (
         <div className="p-5 md:p-0 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-serif font-bold text-slate-900 tracking-tight">
-                        {useLanguage().t("welcome")}, <span className="text-primary">{voter?.name || "Citizen"}</span>
+                        {t("welcome")}, <span className="text-primary">{voter?.name || "Citizen"}</span>
                     </h2>
                     <p className="text-slate-500 font-medium">Welcome to your Citizen Intelligence Portal</p>
                 </div>

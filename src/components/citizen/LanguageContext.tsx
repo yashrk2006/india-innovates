@@ -62,8 +62,13 @@ const translations: Translations = {
     },
     manifesto_tracker: {
         EN: "Manifesto Tracker",
-        HI: "घोषणापत्र ट्रैकर",
+        HI: "घोषणापत्र ट्रैکر",
         UR: "منشور ٹریکر",
+    },
+    government_schemes: {
+        EN: "Government Schemes",
+        HI: "सरकारी योजनाएं",
+        UR: "سرکاری اسکیمیں",
     },
     identity_verified: {
         EN: "Identity Verified",

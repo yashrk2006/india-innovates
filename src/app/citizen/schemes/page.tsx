@@ -26,13 +26,9 @@ export default function SchemesPage() {
         const fetchAll = async () => {
             try {
                 const profile = await getVoterProfile();
-                if (!profile) {
-                    setLoading(false);
-                    return;
-                }
-
+                
                 const [voterStats, allSchemes] = await Promise.all([
-                    getVoterSchemes(profile.id),
+                    profile ? getVoterSchemes(profile.id) : Promise.resolve([]),
                     getSchemes()
                 ]);
 

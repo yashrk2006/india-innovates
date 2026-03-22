@@ -100,10 +100,11 @@ export async function updateBooth(id: number, updates: Partial<Pick<BoothRow, "n
  * Get the profile of the Booth Adhyaksh for a given booth.
  */
 export async function getBoothAdhyaksh(boothId: number) {
+    if (!boothId) return null;
     const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("role", "booth_adhyaksh")
+        .eq("role", "booth-adhyaksh")
         .eq("jurisdiction_id", boothId)
         .single();
 

@@ -139,8 +139,10 @@ export async function getVoterCountByBooth() {
  * Get full voter details joined with ECI, Booth, and Constituency data.
  */
 export async function getFullVoterDetails(profileId: string) {
-    // 1. Get the voter record using profile_id
-    const { data: voter, error: vError } = await supabase
+    // Handle mock IDs for demo/dev purposes
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileId);
+    
+    let query = supabase
         .from("voters")
         .select(`
             *,
@@ -151,9 +153,18 @@ export async function getFullVoterDetails(profileId: string) {
                     constituency:constituencies(*)
                 )
             )
-        `)
-        .eq("profile_id", profileId)
-        .single();
+        `);
+
+    if (isUuid) {
+        query = query.eq("profile_id", profileId);
+    } else if (profileId.includes("demo")) {
+        // Fallback for demo users to Rajesh Kumar (ID 3)
+        query = query.eq("id", 3);
+    } else {
+        return null;
+    }
+
+    const { data: voter, error: vError } = await query.single();
 
     if (vError) {
         console.error("Error fetching full voter details:", vError.message);

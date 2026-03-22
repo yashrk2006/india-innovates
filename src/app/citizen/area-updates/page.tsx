@@ -74,7 +74,7 @@ export default function AreaUpdatesPage() {
 
     useEffect(() => {
         getVoterProfile().then(v => {
-            const cid = v?.eci?.booth?.constituency_id || v?.constituency_id;
+            const cid = v?.eci?.booth?.constituency_id || v?.constituency_id || 1;
             getInfrastructureProjects(cid).then(data => {
                 setUpdates(data);
                 setLoading(false);

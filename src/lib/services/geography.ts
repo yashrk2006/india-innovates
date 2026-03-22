@@ -117,6 +117,7 @@ export async function getGeographyChain(constituencyId: number) {
  * Get the profile assigned as leader for a constituency.
  */
 export async function getConstituencyLeader(constituencyId: number) {
+    if (!constituencyId) return null;
     const { data: constituency, error: cError } = await supabase
         .from("constituencies")
         .select("assigned_leader")

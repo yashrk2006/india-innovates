@@ -89,8 +89,9 @@ function Sidebar({ voterName, boothName, constituencyName }: { voterName: string
     const sideItems = [
         { href: "/citizen", label: t("citizen_portal"), icon: "home" },
         { href: "/citizen/profile", label: t("identity_verified"), icon: "person" },
+        { href: "/citizen/manifesto", label: t("manifesto_tracker"), icon: "rule" },
         { href: "/citizen/voter-services", label: t("voter_services"), icon: "assignment" },
-        { href: "/citizen/schemes", label: t("manifesto_tracker"), icon: "description" },
+        { href: "/citizen/schemes", label: t("government_schemes"), icon: "description" },
         { href: "/citizen/area-updates", label: "My Area Updates", icon: "map" },
         { href: "/citizen/grievance", label: "Report Issue", icon: "report_problem" },
     ];
@@ -297,6 +298,7 @@ const pageTitles = (name: string, constituency: string) => ({
     "/citizen/profile": { title: "My Profile", subtitle: "Manage your voter identity and participation." },
     "/citizen/voter-services": { title: "Voter Services", subtitle: "Download forms and guides for electoral participation." },
     "/citizen/schemes": { title: "Government Schemes", subtitle: "Benefits and programs available for you." },
+    "/citizen/manifesto": { title: "Manifesto Tracker", subtitle: "Tracking infrastructure and development promises." },
     "/citizen/area-updates": { title: "Area Updates", subtitle: `Development work in ${constituency}.` },
     "/citizen/grievance": { title: "Lodge Grievance", subtitle: "Report issues in your area." },
     "/citizen/verify": { title: "Verification", subtitle: "Verify your identity securely." },
