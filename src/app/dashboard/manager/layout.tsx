@@ -1,7 +1,7 @@
 "use client";
 import { useState, ReactNode } from "react";
-import ManagerSidebar from "@/components/manager/ManagerSidebar";
-import { SidebarContext } from "@/components/manager/SidebarContext";
+import ManagerSidebar from "@/components/features/manager/ManagerSidebar";
+import { SidebarContext } from "@/components/features/manager/SidebarContext";
 
 export default function ManagerLayout({ children }: { children: ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);

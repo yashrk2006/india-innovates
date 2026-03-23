@@ -7,57 +7,104 @@ import { useLanguage } from "./LanguageContext";
 export default function ESarthiBot() {
     const [isOpen, setIsOpen] = useState(false);
     const { t, language } = useLanguage();
-    const [messages, setMessages] = useState([
-        { role: "bot", content: language === 'HI' ? "नमस्ते! मैं ई-सारथी हूँ। मैं आपकी कैसे मदद कर सकता हूँ?" : language === 'UR' ? "ہیلو! میں ای-سارتھی ہوں۔ میں آپ کی کیسے مدد کر سکتا ہوں؟" : "Namaste! I am E-Sarthi. How can I help you today?" }
-    ]);
+    const [messages, setMessages] = useState<any[]>([]);
+    const [hasInitialized, setHasInitialized] = useState(false);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
-    const recognitionRef = useRef<any>(null);
+    const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+    const API_BASE_URL = ""; // Use relative paths for local Next.js API routes
+    
+    // MediaRecorder refs
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
 
-    // Initialize Speech Recognition
+    const getInitialMessage = () => {
+        if (language === 'HI') return "नमस्ते! मैं ई-सारथी हूँ। मैं आपकी कैसे मदद कर सकता हूँ?";
+        if (language === 'UR') return "ہیلو! میں ای-سارتھی ہوں۔ میں آپ کی کیسے مدد کر सकता हूं؟";
+        return "Namaste! I am E-Sarthi. How can I help you today?";
+    };
+
     useEffect(() => {
-        if (typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
-            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = false;
-            recognitionRef.current.interimResults = false;
-
-            recognitionRef.current.onresult = (event: any) => {
-                const transcript = event.results[0][0].transcript;
-                setInput(prev => prev + (prev ? " " : "") + transcript);
-                setIsListening(false);
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error("Speech recognition error:", event.error);
-                setIsListening(false);
-            };
-
-            recognitionRef.current.onend = () => {
-                setIsListening(false);
-            };
+        if (!hasInitialized) {
+            setMessages([{ role: "bot", content: getInitialMessage() }]);
+            setHasInitialized(true);
         }
-    }, []);
+    }, [language, hasInitialized]);
 
-    const toggleListening = () => {
-        if (!recognitionRef.current) {
-            alert(language === 'HI' ? "आपका ब्राउज़र स्पीच रिकग्निशन को सपोर्ट नहीं करता है।" : "Your browser does not support speech recognition.");
-            return;
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                await sendAudioToBackend(audioBlob);
+                stream.getTracks().forEach(track => track.stop()); // Stop microphone
+            };
+
+            mediaRecorder.start();
+            setIsListening(true);
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            alert(language === 'HI' ? "माइक्रोफोन एक्सेस करने में त्रुटि।" : "Error accessing microphone.");
         }
+    };
 
-        if (isListening) {
-            recognitionRef.current.stop();
-        } else {
-            // Map LanguageContext codes to BCP 47 locales
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isListening) {
+            mediaRecorderRef.current.stop();
+            setIsListening(false);
+        }
+    };
+
+    const sendAudioToBackend = async (blob: Blob) => {
+        setIsProcessingVoice(true);
+        try {
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.wav');
+            
+            // Map language to Sarvam code
             const locales: Record<string, string> = {
                 'EN': 'en-IN',
                 'HI': 'hi-IN',
-                'UR': 'ur-IN'
+                'UR': 'hi-IN' // Sarvam works best with hi-IN for Hindi/Urdu context
             };
-            recognitionRef.current.lang = locales[language] || 'en-IN';
-            recognitionRef.current.start();
-            setIsListening(true);
+            formData.append('language_code', locales[language] || 'hi-IN');
+
+            const response = await fetch(`${API_BASE_URL}/api/ai/stt`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("STT fetch failed");
+
+            const data = await response.json();
+            const transcript = data.transcript || "";
+            
+            if (transcript) {
+                setInput(prev => prev + (prev ? " " : "") + transcript);
+            }
+        } catch (error) {
+            console.error("STT Error:", error);
+        } finally {
+            setIsProcessingVoice(false);
+        }
+    };
+
+    const toggleListening = () => {
+        if (isListening) {
+            stopRecording();
+        } else {
+            startRecording();
         }
     };
 
@@ -83,7 +130,7 @@ export default function ESarthiBot() {
                 }))
             ];
 
-            const response = await fetch("https://booth-iq.onrender.com/api/ai/chat", {
+            const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ messages: apiMessages }),
@@ -94,14 +141,14 @@ export default function ESarthiBot() {
             const data = await response.json();
             const botContent = data.choices?.[0]?.message?.content || 
                              data.content || 
-                             (language === 'HI' ? "क्षमा करें, मैं अभी जवाब नहीं दे सकता।" : language === 'UR' ? "معذرت، میں ابھی جواب نہیں دے سکتا۔" : "Sorry, I cannot respond right now.");
+                             (language === 'HI' ? "क्षमा करें, मैं अभी जवाब नहीं दे सकता।" : language === 'UR' ? "معذرت، میں ابھی جواب نہیں دے سکتا।" : "Sorry, I cannot respond right now.");
 
             setMessages([...newMessages, { role: "bot", content: botContent }]);
         } catch (error) {
             console.error("Chatbot error:", error);
             setMessages([...newMessages, { 
                 role: "bot", 
-                content: language === 'HI' ? "नेटवर्क त्रुटि। कृपया बाद में प्रयास करें।" : language === 'UR' ? "نیٹ ورک کی خرابی۔ براہ کرم بعد میں دوبارہ کوشش کریں۔" : "Network error. Please try again later." 
+                content: language === 'HI' ? "नेटवर्क त्रुटि। कृपया बाद में प्रयास करें।" : language === 'UR' ? "نیٹ ورک کی خرابی। براہ کرم بعد میں دوبارہ کوشش کریں۔" : "Network error. Please try again later." 
             }]);
         } finally {
             setIsLoading(false);
@@ -109,7 +156,7 @@ export default function ESarthiBot() {
     };
 
     return (
-        <div className="fixed bottom-24 right-6 z-50">
+        <div className="fixed bottom-24 right-6 z-50 flex flex-col items-end" suppressHydrationWarning>
             <AnimatePresence>
                 {isOpen && (
                     <motion.div 
@@ -150,12 +197,15 @@ export default function ESarthiBot() {
                                     </div>
                                 </div>
                             ))}
-                            {isLoading && (
+                            {(isLoading || isProcessingVoice) && (
                                 <div className="flex justify-start">
-                                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-stone-100 shadow-sm flex gap-1">
-                                        <div className="size-1.5 bg-stone-300 rounded-full animate-bounce"></div>
-                                        <div className="size-1.5 bg-stone-300 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                                        <div className="size-1.5 bg-stone-300 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-stone-100 shadow-sm flex items-center gap-2">
+                                        <div className="flex gap-1">
+                                            <div className="size-1.5 bg-stone-300 rounded-full animate-bounce"></div>
+                                            <div className="size-1.5 bg-stone-300 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                            <div className="size-1.5 bg-stone-300 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                        </div>
+                                        {isProcessingVoice && <span className="text-[10px] text-stone-400 italic">Transcribing...</span>}
                                     </div>
                                 </div>
                             )}
@@ -175,10 +225,11 @@ export default function ESarthiBot() {
                                     />
                                     <button 
                                         onClick={toggleListening}
+                                        disabled={isProcessingVoice}
                                         className={`absolute right-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center transition-all ${
                                             isListening 
                                             ? 'bg-red-100 text-red-600 animate-pulse scale-110 shadow-sm shadow-red-200' 
-                                            : 'text-stone-400 hover:text-primary hover:bg-stone-200/50'
+                                            : isProcessingVoice ? 'text-stone-300' : 'text-stone-400 hover:text-primary hover:bg-stone-200/50'
                                         }`}
                                     >
                                         <span className="material-symbols-outlined text-[20px]">{isListening ? 'mic' : 'mic_none'}</span>
@@ -186,10 +237,10 @@ export default function ESarthiBot() {
                                 </div>
                                 <button 
                                     onClick={handleSend}
-                                    disabled={isLoading}
-                                    className={`${isLoading ? 'bg-stone-400' : 'bg-primary'} text-white size-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20`}
+                                    disabled={isLoading || isProcessingVoice}
+                                    className={`${(isLoading || isProcessingVoice) ? 'bg-stone-400' : 'bg-primary'} text-white size-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20`}
                                 >
-                                    <span className="material-symbols-outlined">{isLoading ? 'hourglass_empty' : 'send'}</span>
+                                    <span className="material-symbols-outlined">{(isLoading || isProcessingVoice) ? 'hourglass_empty' : 'send'}</span>
                                 </button>
                             </div>
                         </div>

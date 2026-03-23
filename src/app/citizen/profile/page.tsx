@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { getVoterProfile } from "@/lib/services";
 import type { Voter } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
-import VoterCard from "@/components/citizen/VoterCard";
-import { useLanguage } from "@/components/citizen/LanguageContext";
+import VoterCard from "@/components/features/citizen/VoterCard";
+import { useLanguage } from "@/components/features/citizen/LanguageContext";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 

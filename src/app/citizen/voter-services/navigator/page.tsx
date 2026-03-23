@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLanguage } from "@/components/citizen/LanguageContext";
+import { useLanguage } from "@/components/features/citizen/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 const boothInfo = {

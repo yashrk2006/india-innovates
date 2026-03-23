@@ -49,6 +49,12 @@ export default function GrievancePage() {
     const fileRef = useRef<HTMLInputElement>(null);
     const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Audio recording states
+    const [isRecording, setIsRecording] = useState(false);
+    const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+
     useEffect(() => {
         getGrievances().then(data => {
             setGrievances(data);
@@ -58,6 +64,75 @@ export default function GrievancePage() {
             if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
         };
     }, []);
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                await transcribeAudio(audioBlob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            toast.loading("Recording...", { id: "recording" });
+        } catch (err) {
+            console.error("Microphone access error:", err);
+            toast.error("Could not access microphone.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            toast.dismiss("recording");
+        }
+    };
+
+    const transcribeAudio = async (blob: Blob) => {
+        setIsProcessingVoice(true);
+        const processingToast = toast.loading("Processing voice note...");
+        try {
+            const formData = new FormData();
+            formData.append('audio', blob, 'grievance_voice.wav');
+            formData.append('language_code', 'hi-IN'); // Default to Hindi-India for Sarvam
+
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+            const response = await fetch(`${API_BASE_URL}/api/ai/stt`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("Transcription failed");
+
+            const data = await response.json();
+            const transcript = data.transcript || "";
+            
+            if (transcript) {
+                setDescription(prev => prev + (prev ? " " : "") + transcript);
+                toast.success("Voice transcribed!", { id: processingToast });
+            } else {
+                toast.error("Could not hear anything clearly.", { id: processingToast });
+            }
+        } catch (error) {
+            console.error("STT Error:", error);
+            toast.error("Failed to process voice.", { id: processingToast });
+        } finally {
+            setIsProcessingVoice(false);
+        }
+    };
 
     const handleFileUpload = () => {
         fileRef.current?.click();
@@ -174,7 +249,7 @@ export default function GrievancePage() {
                                             <span className="material-symbols-outlined text-stone-400 text-lg">
                                                 {categories.find(c => c.id === g.category)?.icon || "report_problem"}
                                             </span>
-                                            <span className="font-bold text-sm text-slate-900">{g.category}</span>
+                                            <span className="font-bold text-sm text-slate-900 text-capitalize">{g.category}</span>
                                         </div>
                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[g.status]}`}>
                                             {statusLabels[g.status]}
@@ -277,9 +352,17 @@ export default function GrievancePage() {
                             <span className="material-symbols-outlined text-lg">photo_camera</span>
                             {photoName || "Add Photo"}
                         </button>
-                        <button onClick={() => alert("Voice Note recording feature coming soon.")} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50 text-sm transition-colors">
-                            <span className="material-symbols-outlined text-lg">mic</span>
-                            Voice Note
+                        <button 
+                            onClick={() => isRecording ? stopRecording() : startRecording()} 
+                            disabled={isProcessingVoice}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-sm ${
+                                isRecording 
+                                ? "bg-red-50 border-red-200 text-red-600 animate-pulse" 
+                                : isProcessingVoice ? "bg-stone-50 border-stone-100 text-stone-400" : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-lg">{isRecording ? 'stop_circle' : 'mic'}</span>
+                            {isRecording ? 'Stop Recording' : isProcessingVoice ? 'Transcribing...' : 'Voice Note'}
                         </button>
                     </div>
 
@@ -287,7 +370,7 @@ export default function GrievancePage() {
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={submitting || !description.trim()}
+                        disabled={submitting || !description.trim() || isProcessingVoice}
                         className="w-full py-3.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-red-600/20"
                     >
                         {submitting ? (

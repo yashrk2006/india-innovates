@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getDashboardStats, getBoothWorkers, getBoothAnalytics, getFullVoterDetails, getConstituencyLeader, getBoothAdhyaksh, getInfrastructureProjects, getVoterProfile } from "@/lib/services";
-import { useLanguage } from "@/components/citizen/LanguageContext";
-import EventModal from "@/components/citizen/EventModal";
+import { useLanguage } from "@/components/features/citizen/LanguageContext";
+import EventModal from "@/components/features/citizen/EventModal";
 import { motion, AnimatePresence } from "framer-motion";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 const quickActions = [
     { label: "Lodge Grievance", icon: "report_problem", href: "/citizen/grievance", color: "bg-red-50 text-red-600 border-red-100" },
@@ -14,29 +15,29 @@ const quickActions = [
 ];
 
 const upcomingEvents = [
-    { 
-        id: 1, 
-        date: "24 MAR", 
-        title: "Voter Registration Mega Drive", 
-        location: "Varanasi Town Hall", 
+    {
+        id: 1,
+        date: "24 MAR",
+        title: "Voter Registration Mega Drive",
+        location: "Varanasi Town Hall",
         icon: "how_to_vote",
         description: "A special drive to register new voters and update existing voter IDs. Dedicated help desks will be available for first-time voters.",
         officialLink: "https://voters.eci.gov.in/"
     },
-    { 
-        id: 2, 
-        date: "28 MAR", 
-        title: "Public Health Awareness Camp", 
-        location: "Primary Health Centre, Ward 4", 
+    {
+        id: 2,
+        date: "28 MAR",
+        title: "Public Health Awareness Camp",
+        location: "Primary Health Centre, Ward 4",
         icon: "medical_services",
         description: "Free health check-ups and information on government health schemes like Ayushman Bharat. Specialized doctors will be available for consultations.",
         officialLink: "https://www.pmjay.gov.in/"
     },
-    { 
-        id: 3, 
-        date: "05 APR", 
-        title: "Booth Level Officer (BLO) Meet", 
-        location: "Government School, Booth #142", 
+    {
+        id: 3,
+        date: "05 APR",
+        title: "Booth Level Officer (BLO) Meet",
+        location: "Government School, Booth #142",
         icon: "groups",
         description: "Direct interaction with your Booth Level Officer for any verification or documentation requirements regarding the upcoming elections.",
         officialLink: "https://eci.gov.in/"
@@ -168,7 +169,7 @@ function UpcomingEvents() {
                 ))}
             </div>
 
-            <EventModal 
+            <EventModal
                 isOpen={!!selectedEvent}
                 onClose={() => setSelectedEvent(null)}
                 event={selectedEvent}
@@ -258,7 +259,7 @@ function YourBoothTeam({ boothId }: { boothId: number }) {
     }, [boothId]);
 
     if (loading) return <div className="animate-pulse bg-stone-100 h-32 rounded-xl" />;
-    
+
     const team = [];
     if (adhyaksh) team.push(adhyaksh);
     team.push(...workers);
@@ -274,7 +275,7 @@ function YourBoothTeam({ boothId }: { boothId: number }) {
                     </div>
                 ) : (
                     team.map((w, i) => (
-                        <div key={w.id} className={`bg-white/60 backdrop-blur-md rounded-2xl border border-white p-5 shadow-sm flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-up stagger-${i+1}`}>
+                        <div key={w.id} className={`bg-white/60 backdrop-blur-md rounded-2xl border border-white p-5 shadow-sm flex items-center gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-up stagger-${i + 1}`}>
                             <div className="size-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary/20 ring-4 ring-white">
                                 {w.name?.[0] || 'U'}
                             </div>
@@ -389,19 +390,17 @@ function CampaignPromises({ constituencyId }: { constituencyId?: number }) {
                     <div key={i}>
                         <div className="flex items-center justify-between mb-1.5">
                             <span className="text-sm font-medium text-slate-200 truncate pr-2">{p.title}</span>
-                            <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded focus:outline-none ${
-                                p.progress === 100 ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 
-                                p.progress > 0 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 
-                                'bg-slate-700 text-slate-300 border border-slate-600'
-                            }`}>
+                            <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded focus:outline-none ${p.progress === 100 ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                                    p.progress > 0 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                                        'bg-slate-700 text-slate-300 border border-slate-600'
+                                }`}>
                                 {p.status}
                             </span>
                         </div>
                         <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
                             <div
-                                className={`h-full rounded-full transition-all duration-1000 ${
-                                    p.progress === 100 ? 'bg-green-400' : 'bg-blue-400'
-                                }`}
+                                className={`h-full rounded-full transition-all duration-1000 ${p.progress === 100 ? 'bg-green-400' : 'bg-blue-400'
+                                    }`}
                                 style={{ width: `${p.progress}%` }}
                             />
                         </div>
@@ -444,15 +443,25 @@ export default function CitizenHomePage() {
                     </h2>
                     <p className="text-slate-500 font-medium">Welcome to your Citizen Intelligence Portal</p>
                 </div>
-                <div className="bg-white px-4 py-2 rounded-xl border border-stone-100 shadow-sm flex items-center gap-3">
-                    <div className="size-8 bg-green-100 text-green-700 rounded-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-sm">verified</span>
+                {voter?.aadhaar_verified ? (
+                    <div className="bg-white px-4 py-2 rounded-xl border border-stone-100 shadow-sm flex items-center gap-3">
+                        <VerifiedBadge size="md" showText={true} />
+                        <div className="text-left">
+                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-none">Identity Secure</p>
+                            <p className="text-xs font-bold text-slate-700">{voter?.epic_number || "Digilocker Verified"}</p>
+                        </div>
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-none">Identity Verified</p>
-                        <p className="text-xs font-bold text-slate-700">{voter?.epic_number || voter?.aadhaar || "Digilocker Secure"}</p>
-                    </div>
-                </div>
+                ) : (
+                    <Link href="/citizen/verify" className="bg-white px-4 py-2 rounded-xl border border-stone-100 shadow-sm flex items-center gap-3 hover:bg-stone-50 transition-colors">
+                        <div className="size-8 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center">
+                            <span className="material-symbols-outlined text-sm">shield</span>
+                        </div>
+                        <div className="text-left">
+                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-none">Unverified Profile</p>
+                            <p className="text-xs font-bold text-primary italic underline">Verify Now →</p>
+                        </div>
+                    </Link>
+                )}
             </div>
 
             <ElectionCountdown />

@@ -12,6 +12,7 @@ const NAV = [
     {
         section: "Operations", items: [
             { icon: "dashboard", label: "Dashboard", href: "/dashboard/manager" },
+            { icon: "account_tree", label: "Chain of Command", href: "/dashboard/hierarchy?view=manager" },
             { icon: "location_on", label: "Booth Monitor", href: "/dashboard/manager/booth-monitor" },
             { icon: "group", label: "Worker Tracker", href: "/dashboard/manager/worker-tracker" },
         ]

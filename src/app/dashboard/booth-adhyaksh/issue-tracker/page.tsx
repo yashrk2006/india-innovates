@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function Icon({ name, className = "", size, style }: { name: string; className?: string; size?: number; style?: React.CSSProperties }) {
     return <span className={`material-symbols-outlined ${className}`} style={{ ...(size ? { fontSize: size } : {}), ...style }}>{name}</span>;
@@ -39,87 +40,173 @@ export default function IssueTrackerPage() {
     const [filter, setFilter] = useState("All");
     const tabs = ["All", "Open", "Resolved", "Escalated"];
 
-    const filteredIssues = (status: Issue["status"]) => issues.filter(i => i.status === status && (filter === "All" || (filter === "Open" && (i.status === "NEW" || i.status === "IN_PROGRESS")) || (filter === "Resolved" && i.status === "RESOLVED") || (filter === "Escalated" && i.status === "ESCALATED")));
-
     return (
-        <>
-                <header className="sticky top-0 z-10 bg-stone-50/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <h1 className="font-serif text-lg font-bold">Issue Tracker</h1>
-                        <span className="text-[9px] font-mono bg-red-400/10 text-red-400 px-2 py-0.5 rounded border border-red-400/20">{issues.filter(i => i.status !== "RESOLVED").length} Open · {issues.filter(i => i.priority === "CRITICAL").length} Critical</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="flex gap-1">
-                            {tabs.map(t => (
-                                <button key={t} onClick={() => setFilter(t)} className={`px-3 py-1 rounded text-[10px] font-bold transition-colors ${filter === t ? "bg-[#1e293b]/20 text-[#1e293b] border border-[#1e293b]/30" : "bg-white/5 text-slate-500 border border-white/5 hover:bg-white/10"}`}>{t}</button>
-                            ))}
-                        </div>
-                        <button className="flex items-center gap-1.5 bg-[#1e293b]/10 text-[#1e293b] border border-[#1e293b]/20 px-3 py-1.5 rounded text-[11px] font-bold hover:bg-[#1e293b]/20">
-                            <Icon name="add" size={14} /> Report Issue
-                        </button>
-                    </div>
-                </header>
-
-                <div className="p-6">
-                    {/* Kanban Board */}
-                    <div className="grid grid-cols-4 gap-4">
-                        {columns.map(col => {
-                            const colIssues = issues.filter(i => i.status === col.key);
-                            return (
-                                <div key={col.key}>
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b" style={{ borderColor: col.color + "40" }}>
-                                        <Icon name={col.icon} size={14} style={{ color: col.color }} />
-                                        <span className="text-[11px] font-bold" style={{ color: col.color }}>{col.label}</span>
-                                        <span className="text-[9px] font-mono bg-white/5 px-1.5 py-0.5 rounded text-slate-500">{colIssues.length}</span>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {colIssues.map(issue => {
-                                            const ps = priorityStyle[issue.priority];
-                                            return (
-                                                <div key={issue.id} className={`bg-white shadow-sm rounded border border-slate-200 border-l-[3px] ${ps.border} p-3 hover:bg-white/[0.02] transition-colors cursor-pointer`}>
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Icon name={issue.icon} size={14} className="text-slate-500" />
-                                                            <span className="text-[9px] font-mono text-slate-400">{issue.id}</span>
-                                                        </div>
-                                                        <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded border ${ps.badge}`}>{issue.priority}</span>
-                                                    </div>
-                                                    <p className="text-[11px] font-medium mb-1.5 line-clamp-2">{issue.title}</p>
-                                                    <div className="flex items-center gap-2 text-[9px] text-slate-400">
-                                                        <span>{issue.reporter}</span>
-                                                        <span>·</span>
-                                                        <span>{issue.location}</span>
-                                                        <span>·</span>
-                                                        <span>{issue.time}</span>
-                                                    </div>
-                                                    {issue.assignee && <p className="text-[9px] text-[#1e293b]/60 mt-2 flex items-center gap-1"><Icon name="person" size={10} />{issue.assignee}</p>}
-                                                    {issue.notes && <p className="text-[9px] text-slate-500 mt-1 italic">{issue.notes}</p>}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Stats Bar */}
-                    <div className="mt-6 bg-white shadow-sm rounded border border-slate-200 p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <div className="text-[11px]"><span className="text-slate-500">Avg Resolution:</span> <span className="font-mono text-[#10b981]">4.2 hrs</span></div>
-                            <div className="text-[11px]"><span className="text-slate-500">Escalation Rate:</span> <span className="font-mono text-[#1e293b]">14%</span></div>
-                            <div className="text-[11px]"><span className="text-slate-500">This Week:</span> <span className="font-mono">{issues.length} total</span></div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {[{ cat: "Water", count: 3, color: "#3b82f6" }, { cat: "Roads", count: 1, color: "#f97316" }, { cat: "Power", count: 1, color: "#eab308" }, { cat: "Other", count: 5, color: "#8b5cf6" }].map(c => (
-                                <div key={c.cat} className="flex items-center gap-1 text-[9px]" style={{ color: c.color }}>
-                                    <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: c.color }} />
-                                    {c.cat} ({c.count})
-                                </div>
-                            ))}
-                        </div>
+        <div className="min-h-full pb-12">
+            <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-8 py-5 flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Voter Issue Response</h1>
+                    <div className="flex items-center gap-3 mt-1">
+                        <span className="text-[10px] font-black bg-red-500/10 text-red-600 px-2.5 py-1 rounded-full border border-red-500/20">{issues.filter(i => i.status !== "RESOLVED").length} Active Alarms</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Booth 142 Operational Grid</span>
                     </div>
                 </div>
-        </>
+                <div className="flex items-center gap-6">
+                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                        {tabs.map(t => (
+                            <button 
+                                key={t} 
+                                onClick={() => setFilter(t)} 
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                    filter === t ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                }`}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+                    <button className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20">
+                        <Icon name="add" size={18} /> New Alert
+                    </button>
+                </div>
+            </header>
+
+            <div className="p-8">
+                {/* Kanban Board */}
+                <div className="grid grid-cols-4 gap-6">
+                    {columns.map((col, colIdx) => {
+                        const colIssues = issues.filter(i => i.status === col.key && (filter === "All" || (filter === "Open" && (i.status === "NEW" || i.status === "IN_PROGRESS")) || (filter === "Resolved" && i.status === "RESOLVED") || (filter === "Escalated" && i.status === "ESCALATED")));
+                        
+                        return (
+                            <div key={col.key} className="flex flex-col h-full">
+                                <motion.div 
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: colIdx * 0.1 }}
+                                    className="flex items-center justify-between mb-6 px-2"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${col.color}15` }}>
+                                            <Icon name={col.icon} size={18} style={{ color: col.color }} />
+                                        </div>
+                                        <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-900">{col.label}</span>
+                                    </div>
+                                    <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded-lg border border-slate-200">{colIssues.length}</span>
+                                </motion.div>
+
+                                <div className="space-y-4 flex-1">
+                                    <AnimatePresence>
+                                        {colIssues.map((issue, idx) => {
+                                            const ps = priorityStyle[issue.priority];
+                                            return (
+                                                <motion.div 
+                                                    key={issue.id} 
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    className={`group bg-white rounded-3xl border border-slate-200 border-l-4 ${ps.border} p-5 hover:shadow-2xl hover:shadow-slate-200/50 transition-all cursor-pointer relative overflow-hidden`}
+                                                >
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="size-8 rounded-xl bg-slate-50 flex items-center justify-center">
+                                                                <Icon name={issue.icon} size={16} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
+                                                            </div>
+                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{issue.id}</span>
+                                                        </div>
+                                                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full border ${ps.badge} uppercase tracking-tight`}>{issue.priority}</span>
+                                                    </div>
+
+                                                    <h3 className="text-sm font-black text-slate-900 leading-tight mb-4 group-hover:text-orange-500 transition-colors line-clamp-2">{issue.title}</h3>
+                                                    
+                                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                                                            <Icon name="person" size={14} className="opacity-40" />
+                                                            {issue.reporter}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                                                            <Icon name="location_on" size={14} className="opacity-40" />
+                                                            {issue.location}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 font-mono">
+                                                            <Icon name="schedule" size={14} className="opacity-40" />
+                                                            {issue.time}
+                                                        </div>
+                                                    </div>
+
+                                                    {issue.assignee && (
+                                                        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="size-6 rounded-full bg-slate-900 flex items-center justify-center text-[10px] text-white font-black">
+                                                                    {issue.assignee[0]}
+                                                                </div>
+                                                                <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{issue.assignee}</span>
+                                                            </div>
+                                                            <Icon name="chat_bubble" size={14} className="text-slate-300" />
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </AnimatePresence>
+
+                                    {colIssues.length === 0 && (
+                                        <div className="h-24 rounded-3xl border-2 border-dashed border-slate-100 flex items-center justify-center">
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Clear</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Response Analytics */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-12 bg-slate-900 rounded-[2.5rem] p-8 text-white flex items-center justify-between shadow-2xl relative overflow-hidden"
+                >
+                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+
+                    <div className="flex items-center gap-12 relative z-10">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Mean Response</p>
+                            <p className="text-2xl font-black text-emerald-400">4.2 <span className="text-sm opacity-50">HRS</span></p>
+                        </div>
+                        <div className="w-px h-10 bg-white/10" />
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Critical Success Rate</p>
+                            <p className="text-2xl font-black text-orange-400">92 <span className="text-sm opacity-50">%</span></p>
+                        </div>
+                        <div className="w-px h-10 bg-white/10" />
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Operational Pulse</p>
+                            <div className="flex items-center gap-4">
+                                <p className="text-2xl font-black">STABLE</p>
+                                <div className="flex gap-1">
+                                    {[1, 2, 3, 2, 4, 3].map((h, i) => (
+                                        <motion.div 
+                                            key={i}
+                                            animate={{ height: [8, 16, 8] }}
+                                            transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+                                            className="w-1 bg-emerald-500 rounded-full"
+                                            style={{ height: h * 4 }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 relative z-10">
+                        {[{ cat: "Water", color: "#3b82f6" }, { cat: "Security", color: "#ef4444" }, { cat: "Power", color: "#eab308" }].map(c => (
+                            <div key={c.cat} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest">
+                                <span className="size-2 rounded-full" style={{ backgroundColor: c.color }} />
+                                {c.cat}
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+            </div>
+        </div>
     );
 }

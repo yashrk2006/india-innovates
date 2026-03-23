@@ -182,3 +182,41 @@ export async function getVoterProfile() {
     if (!user) return null;
     return getFullVoterDetails(user.id);
 }
+
+/**
+ * Update voter's Aadhaar verification status.
+ */
+export async function updateVoterVerification(voterId: number, isVerified: boolean = true) {
+    const { data, error } = await supabase
+        .from("voters")
+        .update({ aadhaar_verified: isVerified })
+        .eq("id", voterId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error updating voter verification:", error.message);
+        return null;
+    }
+    return data;
+}
+
+/**
+ * Search for a voter in the official roll by EPIC number.
+ */
+export async function searchVoterRoll(epicNumber: string) {
+    const { data, error } = await supabase
+        .from("voters_eci")
+        .select(`
+            *,
+            booth:booths(*)
+        `)
+        .ilike("epic_number", epicNumber)
+        .single();
+
+    if (error) {
+        console.error("Error searching voter roll:", error.message);
+        return null;
+    }
+    return data;
+}

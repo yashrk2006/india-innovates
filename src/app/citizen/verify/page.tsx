@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getVoterProfile, updateVoterVerification } from "@/lib/services/voters";
 
 export default function VerificationPage() {
     const router = useRouter();
@@ -75,18 +76,37 @@ export default function VerificationPage() {
         }
     };
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         if (otp.some(d => !d)) return;
         setLoading(true);
-        if (timerRefs.current.verifyDelay) clearTimeout(timerRefs.current.verifyDelay);
-        timerRefs.current.verifyDelay = setTimeout(() => {
+        
+        try {
+            // Real verification logic
+            const profile = await getVoterProfile();
+            if (!profile) {
+                console.error("Voter profile not found");
+                setLoading(false);
+                return;
+            }
+
+            const success = await updateVoterVerification(profile.id);
+            if (!success) {
+                console.error("Failed to update verification status");
+                setLoading(false);
+                return;
+            }
+
             setLoading(false);
             setStep(3);
+            
             // Set cookie and redirect after showing success
             document.cookie = "citizen_token=true; path=/; max-age=86400";
             if (timerRefs.current.redirectDelay) clearTimeout(timerRefs.current.redirectDelay);
             timerRefs.current.redirectDelay = setTimeout(() => router.push("/citizen"), 2500);
-        }, 2000);
+        } catch (err) {
+            console.error("Verification error:", err);
+            setLoading(false);
+        }
     };
 
     const handleResend = () => {

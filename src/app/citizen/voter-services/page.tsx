@@ -1,7 +1,9 @@
 "use client";
 
-import { useLanguage } from "@/components/citizen/LanguageContext";
-import { motion } from "framer-motion";
+import { useLanguage } from "@/components/features/citizen/LanguageContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { searchVoterRoll } from "@/lib/services/voters";
 
 const forms = [
     {
@@ -40,6 +42,24 @@ const forms = [
 
 export default function VoterServicesPage() {
     const { language, t } = useLanguage();
+    const [epic, setEpic] = useState("");
+    const [searching, setSearching] = useState(false);
+    const [result, setResult] = useState<any>(null);
+    const [showModal, setShowModal] = useState(false);
+
+    const handleSearch = async () => {
+        if (!epic.trim()) return;
+        setSearching(true);
+        setResult(null);
+        try {
+            const data = await searchVoterRoll(epic.trim());
+            setResult(data || "not_found");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSearching(false);
+        }
+    };
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -125,7 +145,7 @@ export default function VoterServicesPage() {
                             The Election Commission has released the updated electoral roll for the upcoming 2026 elections. Verify your name and serial number to ensure your right to vote.
                         </p>
                         <button 
-                            onClick={() => alert("Searching Electoral Roll...")}
+                            onClick={() => setShowModal(true)}
                             className="px-8 py-3.5 bg-primary text-white rounded-2xl font-bold text-sm hover:scale-105 transition-transform active:scale-95 shadow-xl shadow-primary/20"
                         >
                             Verify in Voter Roll
@@ -250,6 +270,98 @@ export default function VoterServicesPage() {
                     </div>
                 </div>
             </div>
+            {/* Search Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowModal(false)}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                        />
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-stone-100"
+                        >
+                            <div className="p-8">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-2xl font-display font-bold text-slate-900">Search Voter Roll</h3>
+                                    <button onClick={() => setShowModal(false)} className="size-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 hover:bg-stone-200 transition-colors">
+                                        <span className="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">EPIC Number</label>
+                                        <div className="relative">
+                                            <input 
+                                                type="text" 
+                                                value={epic}
+                                                onChange={(e) => setEpic(e.target.value.toUpperCase())}
+                                                placeholder="Enter Voter ID (e.g. ABC1234567)"
+                                                className="w-full px-5 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-lg font-medium"
+                                            />
+                                            <button 
+                                                onClick={handleSearch}
+                                                disabled={searching || !epic}
+                                                className="absolute right-2 top-2 bottom-2 px-6 bg-primary text-white rounded-xl font-bold text-sm disabled:opacity-50"
+                                            >
+                                                {searching ? "Searching..." : "Search"}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {result === "not_found" && (
+                                        <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700 animate-shake">
+                                            <span className="material-symbols-outlined">error</span>
+                                            <p className="text-sm font-medium">Record not found. Please check the EPIC number.</p>
+                                        </div>
+                                    )}
+
+                                    {result && result !== "not_found" && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-6 bg-green-50 border border-green-100 rounded-3xl space-y-4"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="size-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-200">
+                                                    <span className="material-symbols-outlined">person</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider">Record Found</p>
+                                                    <h4 className="text-xl font-bold text-slate-900">{result.name}</h4>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-white/60 p-3 rounded-xl border border-green-200/50">
+                                                    <p className="text-[10px] text-stone-500 font-bold uppercase">Booth Name</p>
+                                                    <p className="text-sm font-bold text-slate-800">{result.booth?.name || "N/A"}</p>
+                                                </div>
+                                                <div className="bg-white/60 p-3 rounded-xl border border-green-200/50">
+                                                    <p className="text-[10px] text-stone-500 font-bold uppercase">Serial Number</p>
+                                                    <p className="text-sm font-bold text-slate-800">#{result.serial_no || "N/A"}</p>
+                                                </div>
+                                            </div>
+
+                                            <button className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">download</span>
+                                                Download Voter Slip
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

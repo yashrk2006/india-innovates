@@ -137,3 +137,24 @@ export async function getBoothAnalytics(boothId: number) {
         resolutionRate: totalGrievances ? Math.round((resolvedGrievances! / totalGrievances!) * 100) : 0,
     };
 }
+
+/**
+ * Get the Panna Pramukh for a specific booth.
+ */
+export async function getPannaPramukh(boothId: number) {
+    if (!boothId) return null;
+    const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("role", "panna-pramukh")
+        .eq("jurisdiction_id", boothId)
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Error fetching Panna Pramuakh:", error.message);
+        return null;
+    }
+
+    return profile;
+}

@@ -168,3 +168,47 @@ export async function toggleLikeProject(projectId: number, voterId: number): Pro
     }
     return !!data;
 }
+
+/**
+ * Get comments for an infrastructure project.
+ */
+export async function getProjectComments(projectId: number) {
+    const { data, error } = await supabase
+        .from("infrastructure_project_comments")
+        .select(`
+            *,
+            voter:voters(
+                id,
+                eci:voters_eci(name)
+            )
+        `)
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("Error fetching project comments:", error.message);
+        return [];
+    }
+    return data;
+}
+
+/**
+ * Add a comment to an infrastructure project.
+ */
+export async function addProjectComment(projectId: number, voterId: number, text: string) {
+    const { data, error } = await supabase
+        .from("infrastructure_project_comments")
+        .insert({
+            project_id: projectId,
+            voter_id: voterId,
+            comment_text: text
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error adding project comment:", error.message);
+        return null;
+    }
+    return data;
+}

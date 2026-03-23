@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import { getInfrastructureProjects, toggleLikeProject, getVoterProfile } from "@/lib/services";
 import type { InfrastructureProject } from "@/lib/types";
-import ProjectMap from "@/components/citizen/ProjectMap";
+import ProjectMap from "@/components/features/citizen/ProjectMap";
 import { motion, AnimatePresence } from "framer-motion";
 
 function BeforeAfterSlider({ before, after }: { before: string; after: string }) {

@@ -5,8 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getNotifications, markNotificationRead, markAllNotificationsRead, subscribeToNotifications, getVoterProfile } from "@/lib/services";
 import type { CitizenNotification } from "@/lib/types";
-import { LanguageProvider, useLanguage } from "@/components/citizen/LanguageContext";
-import ESarthiBot from "@/components/citizen/ESarthiBot";
+import { LanguageProvider, useLanguage } from "@/components/features/citizen/LanguageContext";
+import ESarthiBot from "@/components/features/citizen/ESarthiBot";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 // --- Nav Items Config ---
 const navItems = [
@@ -74,7 +75,7 @@ function Header({ onNotificationToggle, unreadCount, constituency }: { onNotific
     );
 }
 
-function Sidebar({ voterName, boothName, constituencyName }: { voterName: string; boothName: string; constituencyName: string }) {
+function Sidebar({ voterName, boothName, constituencyName, isVerified }: { voterName: string; boothName: string; constituencyName: string; isVerified?: boolean }) {
     const router = useRouter();
     const pathname = usePathname();
 
@@ -151,11 +152,18 @@ function Sidebar({ voterName, boothName, constituencyName }: { voterName: string
 
             <div className="p-4 border-t border-stone-100">
                 <div className="bg-stone-50 rounded-xl p-4 flex items-center gap-3">
-                    <div className="size-10 rounded-full bg-primary/10 shrink-0 flex items-center justify-center text-primary font-bold text-lg">
+                    <div className="size-10 rounded-full bg-primary/10 shrink-0 flex items-center justify-center text-primary font-bold text-lg relative">
                         {voterName.charAt(0)}
+                        {isVerified && (
+                            <div className="absolute -bottom-1 -right-1">
+                                <VerifiedBadge size="sm" />
+                            </div>
+                        )}
                     </div>
                     <div className="overflow-hidden flex-1">
-                        <p className="font-bold text-sm text-slate-900 truncate">{voterName}</p>
+                        <div className="flex items-center gap-1 overflow-hidden">
+                            <p className="font-bold text-sm text-slate-900 truncate">{voterName}</p>
+                        </div>
                         <p className="text-xs text-stone-500 truncate">{constituencyName} • {boothName}</p>
                     </div>
                     <button onClick={handleLogout} className="ml-auto text-stone-400 hover:text-red-500 transition-colors" title="Sign Out">
@@ -332,7 +340,7 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
         if (!voter?.id) return;
 
         let cleanup: (() => void) | undefined;
-        
+
         const setupSubscription = async () => {
             cleanup = await subscribeToNotifications(voter.id, (newNotification) => {
                 setNotifications(prev => [newNotification, ...prev]);
@@ -340,7 +348,7 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
         };
 
         setupSubscription();
-        
+
         return () => {
             if (cleanup) cleanup();
         };
@@ -364,7 +372,12 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
     return (
         <LanguageProvider>
             <div className="flex min-h-screen bg-[#f0f2f0] font-body text-slate-900" suppressHydrationWarning>
-                <Sidebar voterName={voterName} boothName={boothName} constituencyName={constituencyName} />
+                <Sidebar
+                    voterName={voterName}
+                    boothName={boothName}
+                    constituencyName={constituencyName}
+                    isVerified={voter?.aadhaar_verified}
+                />
 
                 <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
                     <Header onNotificationToggle={() => setShowNotifications(true)} unreadCount={unreadCount} constituency={constituencyName} />
@@ -406,7 +419,7 @@ export default function CitizenLayout({ children }: { children: React.ReactNode 
                     </main>
 
                     <ESarthiBot />
-                    
+
                     {/* Mobile Navigation */}
 
                     <BottomNav />

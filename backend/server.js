@@ -13,7 +13,14 @@ app.use(express.json());
 
 // Request Logging Middleware
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    const logMsg = `[${new Date().toISOString()}] ${req.method} ${req.url}\n`;
+    try {
+        const path = require('path');
+        require('fs').appendFileSync(path.join(__dirname, 'access.log'), logMsg);
+    } catch (err) {
+        console.error("Log Write Error:", err.message);
+    }
+    console.log(logMsg.trim());
     next();
 });
 
@@ -22,6 +29,9 @@ app.get('/', (req, res) => {
     res.json({ message: 'Sarvam AI Proxy Backend is Live!', endpoints: ['/health', '/api/ai', '/api/notifications'] });
 });
 
+const verificationRoutes = require('./routes/verificationRoutes');
+
+app.use('/api/verify', verificationRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/notifications', notificationRoutes);
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import ManagerPageLayout, { MgrCard, MgrSection, MgrKPI, MgrBar } from "@/components/manager/ManagerPageLayout";
+import ManagerPageLayout, { MgrCard, MgrSection, MgrKPI, MgrBar } from "@/components/features/manager/ManagerPageLayout";
 import { useApi } from "@/lib/hooks";
 import { useToast } from "@/components/ui/Toast";
 
@@ -36,136 +36,221 @@ export default function BoothMonitorPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    title: `Dispatch to ${boothId}`,
-                    description: `Urgent dispatch requested for booth ${boothId}`,
+                    title: `Tactical Deployment: ${boothId}`,
+                    description: `Urgent mobilization requested for booth ${boothId} to address field reports.`,
                     priority: "high",
                     booth_id: boothId,
                 }),
             });
-            if (res.ok) toast(`Worker dispatched to ${boothId}`, "success");
-            else toast("Failed to dispatch — try again", "error");
-        } catch { toast("Network error", "error"); }
+            if (res.ok) toast(`Personnel dispatched to ${boothId}`, "success");
+            else toast("Dispatch sequence failed — retry required", "error");
+        } catch { toast("Communication link error", "error"); }
     };
 
     const handleViewHistory = (boothId: string) => {
-        toast(`Loading history for ${boothId}...`, "info");
-        // In production, this would navigate to a detail page
+        toast(`Accessing historical logs for ${boothId}...`, "info");
     };
 
     return (
-        <ManagerPageLayout title="Booth Monitor" badge="📍 REAL-TIME" badgeColor="#10b981">
-            <div className="grid grid-cols-5 gap-3">
-                <MgrKPI icon="location_on" label="Total Booths" value={boothStats?.total?.toString() || String(booths.length)} sub="In district" color="#1e293b" delay={0} />
-                <MgrKPI icon="check_circle" label="Active" value={boothStats?.active?.toString() || String(booths.filter(b => b.status === "ACTIVE").length)} sub="Operational" color="#10b981" delay={0.05} />
-                <MgrKPI icon="pause_circle" label="Stalled" value={String(booths.filter(b => b.status === "STALLED").length)} sub="Need attention" color="#f59e0b" delay={0.1} />
-                <MgrKPI icon="error" label="Offline" value={boothStats?.offline?.toString() || String(booths.filter(b => b.status === "OFFLINE").length)} sub="Critical" color="#ef4444" delay={0.15} />
-                <MgrKPI icon="accessible" label="PwD Ready" value={String(booths.filter(b => b.ramp).length)} sub={`of ${booths.length} booths`} color="#818cf8" delay={0.2} />
+        <ManagerPageLayout title="Booth Monitoring Matrix" badge="LIVE SENSORS" badgeColor="#10b981">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+                <MgrKPI icon="hub" label="Total Assets" value={boothStats?.total?.toString() || String(booths.length)} sub="District Coverage" color="#1e293b" delay={0.1} />
+                <MgrKPI icon="check_circle" label="Operational" value={boothStats?.active?.toString() || String(booths.filter(b => b.status === "ACTIVE").length)} sub="Standard Status" color="#10b981" delay={0.15} />
+                <MgrKPI icon="pause_circle" label="Stalled" value={String(booths.filter(b => b.status === "STALLED").length)} sub="Intervention Needed" color="#f59e0b" delay={0.2} />
+                <MgrKPI icon="error" label="Critical" value={boothStats?.offline?.toString() || String(booths.filter(b => b.status === "OFFLINE").length)} sub="Immediate Action" color="#ef4444" delay={0.25} />
+                <MgrKPI icon="accessible" label="Accessibility" value={String(booths.filter(b => b.ramp).length)} sub={`of ${booths.length} Validated`} color="#6366f1" delay={0.3} />
             </div>
 
-            <div className="grid grid-cols-[1fr_380px] gap-5">
-                <div className="space-y-3">
-                    <MgrCard>
-                        <div className="p-3 flex items-center gap-2">
-                            <span className="text-[8px] font-mono text-slate-500 tracking-widest mr-1">FILTER:</span>
+            <div className="flex flex-col xl:grid xl:grid-cols-[1fr_420px] gap-8">
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex gap-2 bg-stone-100/50 p-1.5 rounded-2xl border border-stone-200 shadow-sm backdrop-blur-sm">
                             {["ALL", "ACTIVE", "STALLED", "OFFLINE"].map(f => (
                                 <button key={f} onClick={() => setFilter(f)}
-                                    className={`text-[9px] font-mono px-2.5 py-1 rounded transition-all ${filter === f ? "bg-[#1e293b]/15 text-[#1e293b] border border-[#1e293b]/25" : "text-slate-400 hover:text-slate-500"}`}>{f}</button>
+                                    className={`text-[10px] font-black px-5 py-2 rounded-xl transition-all tracking-widest ${filter === f ? "bg-white text-stone-900 shadow-sm border border-stone-100" : "text-stone-400 hover:text-stone-600 uppercase"}`}>{f}</button>
                             ))}
                         </div>
-                    </MgrCard>
+                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Showing {filtered.length} Locations</p>
+                    </div>
 
-                    {filtered.map((b, i) => (
-                        <motion.div key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                            className={`bg-white shadow-sm rounded-xl border cursor-pointer transition-all ${selectedBooth === b.id ? "border-[#1e293b]/40 ring-1 ring-[#1e293b]/20" : "border-slate-200 hover:border-slate-200"}`}
-                            onClick={() => setSelectedBooth(selectedBooth === b.id ? null : b.id)}>
-                            <div className="flex items-stretch">
-                                <div className="w-1.5 shrink-0 rounded-l-xl" style={{ background: statusColor[b.status] }} />
-                                <div className="flex-1 p-4">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                                <span className="font-mono text-[12px] text-[#1e293b] font-bold">{b.id}</span>
-                                                <span className="text-[12px] text-slate-500 font-medium">{b.name}</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {filtered.map((b, i) => (
+                            <motion.div 
+                                key={b.id} 
+                                initial={{ opacity: 0, scale: 0.95 }} 
+                                animate={{ opacity: 1, scale: 1 }} 
+                                transition={{ delay: 0.1 + i * 0.05 }}
+                                className={`group bg-white rounded-[2.5rem] border-2 cursor-pointer transition-all hover:shadow-2xl hover:-translate-y-1 ${selectedBooth === b.id ? "border-stone-900 ring-4 ring-stone-900/5 bg-stone-50/50" : "border-stone-100"}`}
+                                onClick={() => setSelectedBooth(selectedBooth === b.id ? null : b.id)}
+                            >
+                                <div className="p-7">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-black text-[20px] text-stone-900 tracking-tight leading-none">{b.id}</span>
+                                                <div className="size-2.5 rounded-full animate-pulse shadow-[0_0_8px_rgba(0,0,0,0.1)]" style={{ backgroundColor: statusColor[b.status] }} />
                                             </div>
-                                            <div className="flex gap-3 text-[9px] text-slate-500">
-                                                <span>📍 {b.ward}</span><span>{b.address}</span><span>🕐 {b.lastUpdate}</span>
+                                            <h4 className="text-[14px] font-bold text-stone-500 truncate max-w-[180px]">{b.name}</h4>
+                                        </div>
+                                        <span className="text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm" style={{ color: statusColor[b.status], background: `white`, border: `1px solid ${statusColor[b.status]}30` }}>{b.status}</span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-6 mb-8">
+                                        <div className="space-y-2">
+                                            <p className="text-[9px] font-black text-stone-300 uppercase tracking-widest">Saturation</p>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1"><MgrBar pct={b.visited} h={10} color="#1c1917" /></div>
+                                                <span className="text-[12px] font-black text-stone-900">{b.visited}%</span>
                                             </div>
                                         </div>
-                                        <span className="text-[7px] font-mono px-1.5 py-0.5 rounded" style={{ color: statusColor[b.status], background: statusColor[b.status] + "12" }}>{b.status}</span>
+                                        <div className="space-y-2">
+                                            <p className="text-[9px] font-black text-stone-300 uppercase tracking-widest">Reports</p>
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="history" size={16} className="text-stone-300" />
+                                                <span className="text-[12px] font-black text-stone-900 uppercase tracking-tight">{b.lastUpdate} IST</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-4 text-[9px] mt-2">
-                                        <span className="text-slate-500">Voters: <span className="text-slate-500 font-mono">{b.voters.toLocaleString()}</span></span>
-                                        <span className="text-slate-500">Visited: <span className="text-[#1e293b] font-mono">{b.visited}%</span></span>
-                                        <span className="text-slate-500">Workers: <span className="text-slate-500 font-mono">{b.workers}</span></span>
-                                        <span className="text-slate-500">EVM: <span className="text-slate-500 font-mono">{b.ev}</span></span>
-                                        {b.issues.length > 0 && <span className="text-red-400">⚠ {b.issues.length} issue{b.issues.length > 1 ? "s" : ""}</span>}
+
+                                    <div className="flex items-center justify-between pt-6 border-t border-stone-50">
+                                        <div className="flex -space-x-3">
+                                            {[...Array(Math.min(b.workers, 4))].map((_, idx) => (
+                                                <div key={idx} className="size-8 rounded-full bg-stone-100 border-4 border-white flex items-center justify-center text-[10px] font-black text-stone-500 shadow-sm">
+                                                    W
+                                                </div>
+                                            ))}
+                                            {b.workers > 4 && <div className="size-8 rounded-full bg-stone-900 border-4 border-white flex items-center justify-center text-[10px] font-black text-white shadow-sm">+{b.workers - 4}</div>}
+                                        </div>
+                                        <div className="flex gap-2.5">
+                                            {b.issues.length > 0 && (
+                                                <div className="size-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center animate-bounce shadow-sm">
+                                                    <Icon name="warning" size={16} />
+                                                </div>
+                                            )}
+                                            <div className="size-8 rounded-xl bg-stone-50 text-stone-400 flex items-center justify-center group-hover:bg-stone-900 group-hover:text-white transition-all shadow-sm">
+                                                <Icon name="chevron_right" size={20} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))}
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Detail Panel */}
-                <div className="space-y-4">
+                {/* Tactical Detail Panel */}
+                <div className="sticky top-24 h-fit">
                     <AnimatePresence mode="wait">
                         {selected ? (
-                            <motion.div key={selected.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                            <motion.div 
+                                key={selected.id} 
+                                initial={{ opacity: 0, x: 40, filter: "blur(10px)" }} 
+                                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }} 
+                                exit={{ opacity: 0, x: 40, filter: "blur(10px)" }}
+                                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                            >
                                 <MgrCard>
-                                    <div className="p-5">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[20px] font-bold text-[#1e293b]" style={{ background: statusColor[selected.status] + "12", border: `1px solid ${statusColor[selected.status]}25` }}>{selected.id.slice(-3)}</div>
-                                            <div>
-                                                <h3 className="text-[15px] text-slate-500 font-bold">{selected.name}</h3>
-                                                <p className="text-[9px] text-slate-500">{selected.address}, {selected.ward}</p>
+                                    <div className="p-10 space-y-10">
+                                        <div className="flex items-center gap-6">
+                                            <div className="size-24 rounded-[2.5rem] flex items-center justify-center text-4xl font-black text-white shadow-2xl rotate-3 shrink-0" style={{ background: `linear-gradient(135deg, #1c1917, ${statusColor[selected.status]})` }}>
+                                                {selected.id.slice(-2)}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <h3 className="text-2xl font-black text-stone-900 tracking-tight leading-tight">{selected.name}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-xl bg-stone-900 text-white shadow-sm">{selected.id}</span>
+                                                    <span className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">{selected.ward}</span>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-2 mb-4">
+                                        <div className="grid grid-cols-2 gap-4">
                                             {[
-                                                { l: "Voters", v: selected.voters.toLocaleString(), c: "#1e293b" },
-                                                { l: "Coverage", v: `${selected.visited}%`, c: selected.visited > 70 ? "#10b981" : "#f59e0b" },
-                                                { l: "Workers", v: String(selected.workers), c: selected.workers > 2 ? "#10b981" : "#ef4444" },
-                                                { l: "Last Update", v: selected.lastUpdate, c: "#60a5fa" },
+                                                { label: "Voter Volume", val: selected.voters.toLocaleString(), icon: "groups", color: "#1c1917" },
+                                                { label: "Target Coverage", val: `${selected.visited}%`, icon: "my_location", color: selected.visited > 70 ? "#10b981" : "#f59e0b" },
+                                                { label: "Field Agents", val: String(selected.workers), icon: "person", color: selected.workers > 2 ? "#6366f1" : "#ef4444" },
+                                                { label: "Last Sync", val: selected.lastUpdate, icon: "sync", color: "#78716c" },
                                             ].map(d => (
-                                                <div key={d.l} className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                                                    <span className="text-[8px] text-slate-400 block">{d.l}</span>
-                                                    <span className="text-[16px] font-bold" style={{ color: d.c }}>{d.v}</span>
+                                                <div key={d.label} className="p-6 rounded-[2rem] bg-stone-50/50 border border-stone-100 hover:border-stone-200 transition-all hover:-translate-y-1 group">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <span className="text-[9px] font-black text-stone-400 uppercase tracking-widest leading-none">{d.label}</span>
+                                                        <Icon name={d.icon} size={16} className="text-stone-200 group-hover:text-stone-900 transition-colors" />
+                                                    </div>
+                                                    <span className="text-[22px] font-black tracking-tight" style={{ color: d.color }}>{d.val}</span>
                                                 </div>
                                             ))}
                                         </div>
 
-                                        <div className="text-[8px] font-mono text-slate-400 uppercase tracking-wider mb-2">Infrastructure Checklist</div>
-                                        <div className="grid grid-cols-3 gap-1.5 mb-4">
-                                            {[
-                                                { l: "Ramp", ok: selected.ramp }, { l: "Water", ok: selected.water }, { l: "Power", ok: selected.electricity },
-                                                { l: "Toilet", ok: selected.toilet }, { l: "Shade", ok: selected.shade }, { l: "EVM", ok: true },
-                                            ].map(f => (
-                                                <div key={f.l} className={`text-[9px] px-2 py-1.5 rounded text-center ${f.ok ? "bg-green-500/10 text-green-400 border border-green-500/15" : "bg-red-500/10 text-red-400 border border-red-500/15"}`}>
-                                                    {f.ok ? "✓" : "✗"} {f.l}
-                                                </div>
-                                            ))}
+                                        <div className="space-y-5">
+                                            <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest">Infrastructure Integrity</p>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {[
+                                                    { l: "RAMP", ok: selected.ramp }, { l: "WATER", ok: selected.water }, { l: "POWER", ok: selected.electricity },
+                                                    { l: "TOILET", ok: selected.toilet }, { l: "SHADE", ok: selected.shade }, { l: "EVM LINK", ok: true },
+                                                ].map(f => (
+                                                    <div key={f.l} className={`p-4 rounded-3xl flex flex-col items-center gap-2 border transition-all shadow-sm ${f.ok ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-red-50 border-red-100 text-red-600"}`}>
+                                                        <Icon name={f.ok ? "check_circle" : "cancel"} size={18} />
+                                                        <span className="text-[10px] font-black tracking-widest">{f.l}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
 
                                         {selected.issues.length > 0 && (
-                                            <div className="mb-4">
-                                                <div className="text-[8px] font-mono text-red-400 uppercase tracking-wider mb-2">⚠ Issues ({selected.issues.length})</div>
-                                                {selected.issues.map((iss, idx) => (
-                                                    <div key={idx} className="text-[10px] text-slate-500 py-1.5 px-3 rounded bg-red-500/5 border border-red-500/10 mb-1">• {iss}</div>
-                                                ))}
+                                            <div className="space-y-4">
+                                                <p className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                                                    <Icon name="report" size={16} /> Active Alerts ({selected.issues.length})
+                                                </p>
+                                                <div className="space-y-2.5">
+                                                    {selected.issues.map((iss, idx) => (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, x: 20 }}
+                                                            animate={{ opacity: 1, x: 0 }}
+                                                            key={idx} 
+                                                            className="text-[12px] text-red-700 font-bold py-4 px-6 rounded-[1.5rem] bg-red-50 border border-red-100 shadow-sm"
+                                                        >
+                                                            {iss}
+                                                        </motion.div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
 
-                                        <div className="flex gap-2">
-                                            <button onClick={() => handleDispatchWorker(selected.id)} className="flex-1 text-[9px] font-mono py-2 rounded-lg bg-[#1e293b]/12 text-[#1e293b] border border-[#1e293b]/25 hover:bg-[#1e293b]/20 transition-all">DISPATCH WORKER</button>
-                                            <button onClick={() => handleViewHistory(selected.id)} className="flex-1 text-[9px] font-mono py-2 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all">VIEW HISTORY</button>
+                                        <div className="flex flex-col gap-4 pt-6">
+                                            <button 
+                                                onClick={() => handleDispatchWorker(selected.id)} 
+                                                className="w-full py-6 rounded-[2rem] bg-stone-900 text-white font-black text-[13px] uppercase tracking-[0.25em] shadow-2xl shadow-stone-200 hover:bg-stone-800 transition-all active:scale-95 flex items-center justify-center gap-3"
+                                            >
+                                                <Icon name="send" size={18} />
+                                                Activate Deployment
+                                            </button>
+                                            <button 
+                                                onClick={() => handleViewHistory(selected.id)} 
+                                                className="w-full py-5 rounded-[2.5rem] bg-white text-stone-500 border-2 border-stone-100 font-black text-[11px] uppercase tracking-[0.2em] hover:bg-stone-50 transition-all active:scale-95"
+                                            >
+                                                View Historical Logs
+                                            </button>
                                         </div>
                                     </div>
                                 </MgrCard>
                             </motion.div>
                         ) : (
-                            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                <MgrCard><div className="p-10 text-center"><Icon name="touch_app" size={32} className="text-slate-500 mx-auto mb-2" /><p className="text-[11px] text-slate-400">Select a booth for details</p></div></MgrCard>
+                            <motion.div 
+                                initial={{ opacity: 0 }} 
+                                animate={{ opacity: 1 }}
+                                className="h-full flex flex-col"
+                            >
+                                <MgrCard>
+                                    <div className="p-32 text-center space-y-6">
+                                        <div className="size-24 rounded-[3rem] bg-stone-50 flex items-center justify-center mx-auto shadow-inner border border-stone-100/50">
+                                            <Icon name="near_me" size={48} className="text-stone-200 animate-pulse" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[16px] font-black text-stone-900 uppercase tracking-widest">Awaiting Command</p>
+                                            <p className="text-[12px] text-stone-400 font-bold max-w-[240px] mx-auto leading-relaxed">Select a tactical asset from the matrix below to initialize the command view and field data.</p>
+                                        </div>
+                                    </div>
+                                </MgrCard>
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -43,9 +43,7 @@ export default function VerifyIDPage() {
 
         setLoading(true);
         try {
-            // In a real scenario, we'd check Aadhaar via an external API.
-            // Here, we check the voters_eci table.
-            // For Demo: EPIC lookup uses 'epic_number', Aadhaar lookup mocks with 'phone'
+            // 1. Look up the identity in the official records (voters_eci)
             const { data, error } = await supabase
                 .from("voters_eci")
                 .select("*, booth:booths(name, booth_number)")
@@ -59,9 +57,25 @@ export default function VerifyIDPage() {
             }
 
             setVoterData(data);
-            setStep(3); // Go to OTP step
-            setTimer(30);
-            toast.success("Identity linked! Sending OTP to registered mobile...");
+
+            // 2. Call backend to send OTP
+            const response = await fetch('/api/verify/otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier: data.phone, type: idType })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setStep(3); // Go to OTP step
+                setTimer(30);
+                toast.success(`OTP sent to registration mobile (${data.phone.slice(-4)})`);
+                // For demo purposes, the backend returns the OTP in the body
+                console.log("Demo OTP:", result.otp);
+            } else {
+                toast.error(result.error || "Failed to send OTP. Please try again.");
+            }
         } catch (err) {
             toast.error("An error occurred during verification.");
         } finally {
@@ -90,13 +104,21 @@ export default function VerifyIDPage() {
         }
 
         setLoading(true);
-        // Simulate OTP verification
-        setTimeout(async () => {
-            try {
-                // Set verification cookie for middleware
+        try {
+            // 1. Verify OTP via backend
+            const response = await fetch('/api/verify/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier: voterData.phone, otp: fullOtp })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Identity Verified!
                 document.cookie = "is_citizen_verified=true; path=/; max-age=3600";
 
-                // 1. Check if a 'voters' record already exists for this ECI record
+                // 2. Check if a 'voters' record already exists for this ECI record
                 const { data: existingVoter } = await supabase
                     .from("voters")
                     .select("id, profile_id")
@@ -104,19 +126,33 @@ export default function VerifyIDPage() {
                     .single();
 
                 if (existingVoter?.profile_id) {
-                    toast.success("Verification successful! Redirecting to login...");
-                    router.push(`/auth/login?role=citizen&email=${voterData.phone ? voterData.phone + "@citizen.local" : ""}`);
+                    // Update verification status in Supabase
+                    await supabase
+                        .from('profiles')
+                        .update({ aadhaar_verified: true })
+                        .eq('id', existingVoter.profile_id);
+                    
+                    await supabase
+                        .from('voters')
+                        .update({ aadhaar_verified: true })
+                        .eq('id', existingVoter.id);
+
+                    toast.success("Verification successful! Profile updated.");
+                    router.push(`/citizen`);
                 } else {
                     // Store voter session for pre-filling signup
                     localStorage.setItem("verified_voter", JSON.stringify(voterData));
                     toast.success("Identity Verified! Please complete your profile.");
                     router.push("/auth/signup?role=citizen");
                 }
-            } catch (err) {
-                toast.error("Verification failed. Please try again.");
-                setLoading(false);
+            } else {
+                toast.error(result.error || "Invalid OTP. Please try again.");
             }
-        }, 1500);
+        } catch (err) {
+            toast.error("Verification failed. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
