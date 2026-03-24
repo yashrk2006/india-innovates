@@ -147,12 +147,6 @@ export default function ESarthiBot() {
             setIsLoading(false);
         }
     };
-tent: language === 'HI' ? "नेटवर्क त्रुटि। कृपया बाद में प्रयास करें।" : language === 'UR' ? "نیٹ ورک کی خرابی। براہ کرم بعد میں دوبارہ کوشش کریں۔" : "Network error. Please try again later." 
-            }]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     return (
         <div className="fixed bottom-24 right-6 z-50 flex flex-col items-end" suppressHydrationWarning>
