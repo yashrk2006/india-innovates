@@ -59,24 +59,16 @@ export default function ESarthiBot() {
         }
     };
 
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isListening) {
-            mediaRecorderRef.current.stop();
-            setIsListening(false);
-        }
-    };
-
     const sendAudioToBackend = async (blob: Blob) => {
         setIsProcessingVoice(true);
         try {
             const formData = new FormData();
             formData.append('audio', blob, 'recording.wav');
             
-            // Map language to Sarvam code
             const locales: Record<string, string> = {
                 'EN': 'en-IN',
                 'HI': 'hi-IN',
-                'UR': 'hi-IN' // Sarvam works best with hi-IN for Hindi/Urdu context
+                'UR': 'hi-IN'
             };
             formData.append('language_code', locales[language] || 'hi-IN');
 
@@ -85,26 +77,19 @@ export default function ESarthiBot() {
                 body: formData,
             });
 
-            if (!response.ok) throw new Error("STT fetch failed");
-
             const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "STT fetch failed");
+
             const transcript = data.transcript || "";
             
             if (transcript) {
                 setInput(prev => prev + (prev ? " " : "") + transcript);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("STT Error:", error);
+            alert(`STT Error: ${error.message}`);
         } finally {
             setIsProcessingVoice(false);
-        }
-    };
-
-    const toggleListening = () => {
-        if (isListening) {
-            stopRecording();
-        } else {
-            startRecording();
         }
     };
 
@@ -118,7 +103,6 @@ export default function ESarthiBot() {
         setIsLoading(true);
 
         try {
-            // Prepare messages for Sarvam AI (mapping 'bot' to 'assistant')
             const apiMessages = [
                 { 
                     role: "system", 
@@ -136,19 +120,34 @@ export default function ESarthiBot() {
                 body: JSON.stringify({ messages: apiMessages }),
             });
 
-            if (!response.ok) throw new Error("Failed to get AI response");
-
             const data = await response.json();
-            const botContent = data.choices?.[0]?.message?.content || 
-                             data.content || 
-                             (language === 'HI' ? "क्षमा करें, मैं अभी जवाब नहीं दे सकता।" : language === 'UR' ? "معذرت، میں ابھی جواب نہیں دے سکتا।" : "Sorry, I cannot respond right now.");
+            
+            if (!response.ok) {
+                throw new Error(data.error || `Server returned ${response.status}`);
+            }
+
+            const botContent = data.choices?.[0]?.message?.content || data.content;
+            
+            if (!botContent) {
+                 throw new Error("No response content from AI service");
+            }
 
             setMessages([...newMessages, { role: "bot", content: botContent }]);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Chatbot error:", error);
+            const errorMsg = error.message === "Failed to fetch" 
+                ? "Network error: Connection failed or timed out." 
+                : `Error: ${error.message}`;
+                
             setMessages([...newMessages, { 
                 role: "bot", 
-                content: language === 'HI' ? "नेटवर्क त्रुटि। कृपया बाद में प्रयास करें।" : language === 'UR' ? "نیٹ ورک کی خرابی। براہ کرم بعد میں دوبارہ کوشش کریں۔" : "Network error. Please try again later." 
+                content: language === 'HI' ? `त्रुटि: ${errorMsg}` : `Chat Error: ${errorMsg}` 
+            }]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+tent: language === 'HI' ? "नेटवर्क त्रुटि। कृपया बाद में प्रयास करें।" : language === 'UR' ? "نیٹ ورک کی خرابی। براہ کرم بعد میں دوبارہ کوشش کریں۔" : "Network error. Please try again later." 
             }]);
         } finally {
             setIsLoading(false);
