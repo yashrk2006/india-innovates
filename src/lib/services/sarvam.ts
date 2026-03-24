@@ -5,7 +5,8 @@
 
 const CHAT_API_URL = "https://api.sarvam.ai/v1/chat/completions";
 const TRANSLATE_API_URL = "https://api.sarvam.ai/translate";
-const OCR_API_URL = "https://api.sarvam.ai/v1/ocr"; // Placeholder until exact verified
+const OCR_API_URL = "https://api.sarvam.ai/v1/ocr";
+const STT_API_URL = "https://api.sarvam.ai/speech-to-text";
 const API_KEY = process.env.SARVAM_API_KEY;
 
 export interface ChatMessage {
@@ -29,7 +30,7 @@ export const SarvamService = {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "api-subscription-key": API_KEY, // Sarvam uses this header
+                "api-subscription-key": API_KEY,
             },
             body: JSON.stringify({
                 model: options.model || "sarvam-30b",
@@ -62,7 +63,7 @@ export const SarvamService = {
                 input: text,
                 source_language_code,
                 target_language_code,
-                speaker_gender: "Male", // Default required by some Sarvam endpoints
+                speaker_gender: "Male",
                 mode: "formal",
             }),
         });
@@ -99,4 +100,32 @@ export const SarvamService = {
 
         return response.json();
     },
+
+    /**
+     * Speech-to-Text (STT) using Sarvam AI
+     */
+    async speechToText(audioBlob: Blob, languageCode: string = 'hi-IN') {
+        if (!API_KEY) throw new Error("SARVAM_API_KEY is not configured");
+
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'audio.wav');
+        formData.append('model', 'saaras:v1');
+        formData.append('language_code', languageCode);
+
+        const response = await fetch(STT_API_URL, {
+            method: "POST",
+            headers: {
+                "api-subscription-key": API_KEY,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || `Sarvam STT API error: ${response.status}`);
+        }
+
+        return response.json();
+    },
 };
+

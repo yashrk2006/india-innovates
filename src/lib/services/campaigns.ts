@@ -212,3 +212,33 @@ export async function addProjectComment(projectId: number, voterId: number, text
     }
     return data;
 }
+
+/**
+ * Create a new infrastructure project (Manifesto Item).
+ */
+export async function createInfrastructureProject(project: {
+    title: string;
+    description: string;
+    type: string;
+    constituency_id: number;
+    booth_number?: number;
+    status?: string;
+    progress?: number;
+    icon?: string;
+    icon_bg?: string;
+    before_image_url?: string;
+    after_image_url?: string;
+}) {
+    const { data, error } = await supabase
+        .from("infrastructure_projects")
+        .insert([project])
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error creating infrastructure project:", error.message);
+        return null;
+    }
+    return data;
+}
+

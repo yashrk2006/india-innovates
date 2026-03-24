@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import ManagerPageLayout, { MgrCard, MgrSection, MgrKPI, MgrBar } from "@/components/features/manager/ManagerPageLayout";
 import { useApi } from "@/lib/hooks";
 import { useToast } from "@/components/ui/Toast";
+import { createInfrastructureProject } from "@/lib/services/campaigns";
 
 function Icon({ name, size = 16, className = "", style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) {
     return <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size, ...style }}>{name}</span>;
 }
+
 
 const boothData = [
     { id: "B-001", ward: "Ward 12", workers: 4, doors: 82, keyVoters: 3, issues: 1, status: "ACTIVE" },
@@ -53,6 +55,38 @@ export default function ManagerDashboard() {
         toast("Data synchronized from all booths", "success");
     };
 
+    const [isManifestoModalOpen, setIsManifestoModalOpen] = useState(false);
+    const [manifestoForm, setManifestoForm] = useState({
+        title: "",
+        description: "",
+        type: "road",
+        constituency_id: 2,
+        progress: 0,
+        icon: "construction",
+    });
+
+    const handleSendManifesto = async () => {
+        if (!manifestoForm.title || !manifestoForm.description) {
+            toast("Please fill all required fields", "warning");
+            return;
+        }
+        const result = await createInfrastructureProject(manifestoForm);
+        if (result) {
+            toast("Manifesto project sent to citizen portal!", "success");
+            setIsManifestoModalOpen(false);
+            setManifestoForm({
+                title: "",
+                description: "",
+                type: "road",
+                constituency_id: 2,
+                progress: 0,
+                icon: "construction",
+            });
+        }
+    };
+
+
+
     return (
         <ManagerPageLayout title="District Operations Hub" badge="LIVE" badgeColor="#1e293b"
             actions={
@@ -60,8 +94,10 @@ export default function ManagerDashboard() {
                     <select className="bg-white border border-slate-300 rounded px-3 py-1.5 text-slate-700 font-mono text-[11px] outline-none shadow-sm focus:border-slate-500">
                         <option>All Constituencies</option><option>Lucknow West</option><option>Lucknow East</option>
                     </select>
-                    <button onClick={handleSync} className="font-mono text-[10px] font-bold uppercase bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded transition-all shadow-sm">Sync Data</button>
+                    <button onClick={handleSync} className="font-mono text-[10px] font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-900 px-4 py-1.5 rounded transition-all shadow-sm border border-slate-200">Sync Data</button>
+                    <button onClick={() => setIsManifestoModalOpen(true)} className="font-mono text-[10px] font-bold uppercase bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded transition-all shadow-sm">Send Manifesto</button>
                 </div>
+
             }
         >
             {/* KPI Row */}
@@ -199,6 +235,62 @@ export default function ManagerDashboard() {
                     </div>
                 </MgrCard>
             </div>
+
+            {/* Manifesto Modal */}
+            <AnimatePresence>
+                {isManifestoModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsManifestoModalOpen(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+                        <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="bg-white rounded-2xl w-full max-w-md relative shadow-2xl overflow-hidden border border-slate-200">
+                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                                <h3 className="font-mono text-[11px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                                    <Icon name="campaign" size={14} className="text-slate-900" /> New Manifesto Project
+                                </h3>
+                                <button onClick={() => setIsManifestoModalOpen(false)} className="text-slate-400 hover:text-slate-600"><Icon name="close" size={18} /></button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="font-mono text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Project title</label>
+                                    <input type="text" value={manifestoForm.title} onChange={e => setManifestoForm({ ...manifestoForm, title: e.target.value })}
+                                        placeholder="e.g. New Smart School Wing" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-slate-400 transition-all" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="font-mono text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Description</label>
+                                    <textarea value={manifestoForm.description} onChange={e => setManifestoForm({ ...manifestoForm, description: e.target.value })} rows={3}
+                                        placeholder="Outline the vision and citizen impact..." className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-slate-400 transition-all resize-none" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="font-mono text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Category</label>
+                                        <select value={manifestoForm.type} onChange={e => setManifestoForm({ ...manifestoForm, type: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-slate-400">
+                                            <option value="road">Roads & Transport</option>
+                                            <option value="water">Water Supply</option>
+                                            <option value="electricity">Electricity</option>
+                                            <option value="drainage">Drainage</option>
+                                            <option value="school">Education</option>
+                                            <option value="health">Healthcare</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="font-mono text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Initial Progress</label>
+                                        <input type="number" value={manifestoForm.progress} onChange={e => setManifestoForm({ ...manifestoForm, progress: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-slate-400" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+                                <button onClick={() => setIsManifestoModalOpen(false)} className="flex-1 font-mono text-[10px] font-bold uppercase bg-white border border-slate-200 text-slate-600 py-2.5 rounded hover:bg-slate-100 transition-all">Cancel</button>
+                                <button onClick={handleSendManifesto} className="flex-1 font-mono text-[10px] font-bold uppercase bg-slate-900 text-white py-2.5 rounded hover:bg-slate-800 transition-all shadow-md">Broadcast</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </ManagerPageLayout>
+
     );
 }
