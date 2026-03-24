@@ -59,6 +59,21 @@ export default function ESarthiBot() {
         }
     };
 
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isListening) {
+            mediaRecorderRef.current.stop();
+            setIsListening(false);
+        }
+    };
+
+    const toggleListening = () => {
+        if (isListening) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    };
+
     const sendAudioToBackend = async (blob: Blob) => {
         setIsProcessingVoice(true);
         try {
